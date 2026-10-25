@@ -16,7 +16,7 @@
     "test": "firebase emulators:exec --only firestore --project demo-elwataniatv-rules \"node --test test/rules.test.js\""
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "5.0.2",
+    "@firebase/rules-unit-testing": "6.0.0",
     "firebase": "12.19.0",
     "firebase-tools": "15.34.1"
   }
