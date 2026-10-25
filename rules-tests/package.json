@@ -1,0 +1,23 @@
+{
+  "name": "elwataniatv-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Firestore security rules tests for الوطنية TV",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "overrides": {
+    "@google-cloud/pubsub": "6.3.1",
+    "@grpc/grpc-js": "1.14.6",
+    "@opentelemetry/core": "2.8.0",
+    "uuid": "11.1.1"
+  },
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-elwataniatv-rules \"node --test test/rules.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.34.1"
+  }
+}
