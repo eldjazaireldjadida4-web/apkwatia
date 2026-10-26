@@ -39,8 +39,6 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -138,81 +136,6 @@ fun VideoPlayerView(
 
     val isYouTube = type == "youtube" || type == "web" || url.contains("youtube.com") || url.contains("youtu.be") || url.contains("facebook.com") || url.contains("dailymotion.com")
 
-    var isStreamReachable by remember(url) { mutableStateOf(isYouTube) }
-    var checkKey by remember(url) { mutableIntStateOf(0) }
-
-    LaunchedEffect(url, isYouTube, checkKey) {
-        if (isYouTube) {
-            isStreamReachable = true
-            isBuffering = false
-            hasError = false
-            return@LaunchedEffect
-        }
-        isBuffering = true
-        hasError = false
-        errorMessage = ""
-
-        val isReachable = withContext(Dispatchers.IO) {
-            try {
-                val uri = java.net.URI(url)
-                var conn = (uri.toURL().openConnection() as java.net.HttpURLConnection).apply {
-                    connectTimeout = 3500
-                    readTimeout = 3500
-                    instanceFollowRedirects = true
-                    requestMethod = "GET"
-                    setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36")
-                    setRequestProperty("Range", "bytes=0-512")
-                    setRequestProperty("Accept", "*/*")
-                }
-                var code = conn.responseCode
-                if (code in listOf(301, 302, 303, 307, 308)) {
-                    val redirectUrl = conn.getHeaderField("Location")
-                    conn.disconnect()
-                    if (!redirectUrl.isNullOrBlank()) {
-                        conn = (java.net.URI(redirectUrl).toURL().openConnection() as java.net.HttpURLConnection).apply {
-                            connectTimeout = 3500
-                            readTimeout = 3500
-                            instanceFollowRedirects = true
-                            requestMethod = "GET"
-                            setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36")
-                            setRequestProperty("Range", "bytes=0-512")
-                            setRequestProperty("Accept", "*/*")
-                        }
-                        code = conn.responseCode
-                    }
-                }
-                conn.disconnect()
-                code in 200..399 || code == 416
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        if (!isReachable) {
-            isStreamReachable = false
-            android.util.Log.w("VideoPlayerView", "رابط البث غير متاح: $url — الانتقال للبث البديل")
-            val fallback = if (!fallbackAttempted) {
-                nextFallbackStream(latestCurrentStreamId, latestFallbackStreams)
-            } else {
-                null
-            }
-            if (fallback != null) {
-                fallbackAttempted = true
-                hasError = false
-                isBuffering = true
-                errorMessage = context.getString(R.string.player_switching_fallback)
-                latestOnFallbackStream(fallback)
-            } else {
-                hasError = true
-                isBuffering = false
-                errorMessage = context.getString(R.string.player_stream_not_found)
-            }
-        } else {
-            isStreamReachable = true
-            hasError = false
-        }
-    }
-
     LaunchedEffect(url, isYouTube) {
         if (!isYouTube) return@LaunchedEffect
         webViewLoading = true
@@ -225,8 +148,8 @@ fun VideoPlayerView(
     }
 
     // Single ExoPlayer instance tied to context & url (persists during fullscreen toggle)
-    val exoPlayer = remember(playerContext, url, type, isStreamReachable) {
-        if (isYouTube || !isStreamReachable) null else {
+    val exoPlayer = remember(playerContext, url, type) {
+        if (isYouTube) null else {
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA)
                 .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
@@ -841,8 +764,6 @@ fun VideoPlayerView(
                                         exoPlayer.prepare()
                                         exoPlayer.play()
                                     }
-                                } else {
-                                    checkKey++
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
