@@ -7,17 +7,11 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// The Google Services plugin (FCM / google_app_id resources) is applied
-// ONLY when google-services.json is present. This keeps CI green without
-// the secret (see .github/workflows/ci.yml) while still wiring Firebase
-// fully when the file exists (local builds / releases).
 val googleServicesFile = rootProject.file("google-services.json")
 val appGoogleServicesFile = file("google-services.json")
 val hasGoogleServices = googleServicesFile.exists() || appGoogleServicesFile.exists()
 if (hasGoogleServices) {
     if (googleServicesFile.exists() && !appGoogleServicesFile.exists()) {
-        // The CI workflow writes the secret to the repo root, but the Google
-        // Services plugin only searches the app module — mirror it locally.
         copy {
             from(googleServicesFile)
             into(projectDir)
@@ -25,20 +19,16 @@ if (hasGoogleServices) {
     }
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
-} else if (gradle.startParameter.taskNames.any { it.contains("bundleRelease", ignoreCase = true) }) {
-    // Play Store delivery (AAB) must point at the real production Firebase
-    // project — refusing to build prevents an accidental silent offline app.
-    throw GradleException(
-        "bundleRelease requires app/google-services.json for the production Firebase project."
-    )
-} else if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
-    // A signed APK can still be assembled for internal testing when the
-    // Firebase config is absent: the app degrades gracefully to local data.
-    logger.warn(
-        "No google-services.json found — release APK will run in offline " +
-            "fallback mode (no Firestore/FCM). Add app/google-services.json " +
-            "to enable the production Firebase project."
-    )
+} else {
+    tasks.configureEach {
+        if (name in setOf("packageDebug", "packageRelease", "bundleDebug", "bundleRelease")) {
+            doFirst {
+                throw GradleException(
+                    "Cannot build an installable APK/AAB without google-services.json for com.elwataniatv.app. Add the Android client config locally at app/google-services.json or the project root."
+                )
+            }
+        }
+    }
 }
 
 android {
