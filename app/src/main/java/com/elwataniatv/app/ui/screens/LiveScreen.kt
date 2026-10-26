@@ -16,6 +16,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -179,47 +181,57 @@ fun LiveScreen(
         nextEpgItem(cleanLiveEpg, algeriaMinutesOfDay())
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val hasSyncIssue = syncStatus?.isConnected == false || (syncStatus == null && syncError != null)
+        val useLandscapePlayerLayout =
+            selectedStream != null && maxWidth >= 700.dp && maxWidth > maxHeight && maxHeight >= 360.dp
+        val landscapePlayerHeight =
+            (maxHeight - if (hasSyncIssue) 84.dp else 16.dp).coerceAtLeast(240.dp)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(9.dp),
-        contentPadding = PaddingValues(top = 2.dp, bottom = 96.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = requestRefresh,
-                    enabled = !isRefreshing
+            contentPadding = PaddingValues(
+                top = 2.dp,
+                bottom = if (useLandscapePlayerLayout) 10.dp else 96.dp
+            )
+        ) {
+        if (!useLandscapePlayerLayout) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
+                    TextButton(
+                        onClick = requestRefresh,
+                        enabled = !isRefreshing
+                    ) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = BrandAccent,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(R.string.refresh_data),
+                                tint = BrandAccent,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.refresh_data),
                             color = BrandAccent,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.refresh_data),
-                            tint = BrandAccent,
-                            modifier = Modifier.size(17.dp)
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.refresh_data),
-                        color = BrandAccent,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
                 }
             }
         }
@@ -264,6 +276,23 @@ fun LiveScreen(
             if (selectedStream != null) {
                 // ACTIVE PLAYER MODE: seamless channel handoff without showing internal health text
                 val activeStream = selectedStream
+                if (useLandscapePlayerLayout) {
+                    LandscapeLivePlayer(
+                        activeStream = activeStream,
+                        streams = streams,
+                        switchingStreamId = switchingStreamId,
+                        isRefreshing = isRefreshing,
+                        onRefresh = requestRefresh,
+                        onSelectStream = { item ->
+                            if (item.id != activeStream.id) {
+                                switchingStreamId = item.id
+                                onSelectStream(item)
+                            }
+                        },
+                        onShareLive = onShareLive,
+                        modifier = Modifier.fillMaxWidth().height(landscapePlayerHeight)
+                    )
+                } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Keep exactly one Media3 player in the composition during a channel switch.
                     // AnimatedContent keeps the outgoing player alive during its exit animation,
@@ -397,6 +426,7 @@ fun LiveScreen(
                             }
                         }
                     }
+                }
                 }
             } else {
                 // IDLE MODE: Show Hero and Summary
@@ -1371,6 +1401,164 @@ private fun LiveEqualizerBars(
         Box(modifier = Modifier.width(2.dp).fillMaxHeight(h1).background(color, RoundedCornerShape(1.dp)))
         Box(modifier = Modifier.width(2.dp).fillMaxHeight(h2).background(color, RoundedCornerShape(1.dp)))
         Box(modifier = Modifier.width(2.dp).fillMaxHeight(h3).background(color, RoundedCornerShape(1.dp)))
+    }
+}
+
+@Composable
+private fun LandscapeLivePlayer(
+    activeStream: RemoteStream,
+    streams: List<RemoteStream>,
+    switchingStreamId: String?,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onSelectStream: (RemoteStream) -> Unit,
+    onShareLive: (RemoteStream) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val streamTitle = activeStream.title.trim().ifBlank {
+        stringResource(R.string.default_live_stream_title)
+    }
+
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .testTag("live_landscape_layout")
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(0.32f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(BrandPanel)
+                    .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
+                    .padding(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = streamTitle,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+                        Surface(
+                            color = BrandRed.copy(alpha = 0.16f),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.live_status),
+                                color = BrandRed,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                    IconButton(onClick = onRefresh, enabled = !isRefreshing) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = BrandAccent,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(R.string.refresh_data),
+                                tint = BrandAccent
+                            )
+                        }
+                    }
+                    IconButton(onClick = { onShareLive(activeStream) }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.share_live),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.8f))
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = stringResource(R.string.stream_channels),
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .testTag("channel_switcher"),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (streams.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.no_streams_available),
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        streams.forEach { item ->
+                            val isSelected = item.id == activeStream.id
+                            val isSwitching = switchingStreamId == item.id
+                            BroadcastChannelCard(
+                                item = item,
+                                isSelected = isSelected,
+                                isSwitching = isSwitching,
+                                disabled = switchingStreamId != null,
+                                onClick = {
+                                    if (item.id != activeStream.id) onSelectStream(item)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 3.dp)
+                                    .alpha(if (switchingStreamId != null && !isSwitching) 0.65f else 1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(0.68f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                key(activeStream.id) {
+                    VideoPlayerView(
+                        url = activeStream.url,
+                        type = activeStream.type,
+                        currentStreamId = activeStream.id,
+                        fallbackStreams = streams,
+                        onFallbackStream = onSelectStream,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(16f / 9f)
+                            .testTag("live_video_player")
+                    )
+                }
+            }
+        }
     }
 }
 

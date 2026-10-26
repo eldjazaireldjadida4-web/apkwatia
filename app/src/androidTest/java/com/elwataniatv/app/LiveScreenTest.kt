@@ -2,9 +2,15 @@ package com.elwataniatv.app
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.elwataniatv.app.data.model.ArchiveProgram
 import com.elwataniatv.app.data.local.CommentEntity
@@ -174,6 +180,31 @@ class LiveScreenTest {
         composeTestRule.onNodeWithText("الوطنية TV").assertExists()
         composeTestRule.onNodeWithText("الجزائرية الجديدة").assertExists()
         composeTestRule.onNodeWithText("الوطنية سبورت").assertExists()
+    }
+
+    @Test
+    fun landscapeLayoutKeepsPlayerAndChannelSwitcherTogether() {
+        val stream = RemoteStream(id = "landscape-test", title = "الوطنية TV", url = "https://example.com/live.m3u8")
+        composeTestRule.setContent {
+            ElwataniaTVTheme {
+                Box(modifier = Modifier.width(1024.dp).height(600.dp)) {
+                    LiveScreen(
+                        streams = listOf(stream),
+                        selectedStream = stream,
+                        breaking = BreakingNews(),
+                        epgList = emptyList(),
+                        reminders = emptyList(),
+                        onSelectStream = {},
+                        onToggleReminder = { _, _ -> }
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag("live_landscape_layout").assertExists()
+        composeTestRule.onNodeWithTag("channel_switcher").assertExists()
+        composeTestRule.onNodeWithTag("live_video_player").assertExists()
+        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(300.dp)
     }
 
     @Test
