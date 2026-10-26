@@ -1451,11 +1451,11 @@ async function mountStreamsPane() {
       const typeColor = typeColors[docData.type] || typeColors.other;
       const typeIcon = typeIcons[docData.type] || typeIcons.other;
       const isLiveActive = !!docData.isActive;
-      const initialBadgeColor = isLiveActive ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/40" : "bg-slate-900/60 text-slate-400 border-slate-700/60";
-      const initialDot = isLiveActive ? "bg-emerald-400" : "bg-slate-500";
-      const initialPing = isLiveActive ? "bg-emerald-400" : "hidden";
-      const initialText = isLiveActive ? "متاح ومباشر" : "معطل";
-      const initialSubtext = isLiveActive ? "جاري الفحص..." : "غير نشط";
+      const initialBadgeColor = isLiveActive ? "bg-amber-950/60 text-amber-300 border-amber-500/40" : "bg-slate-900/60 text-slate-400 border-slate-700/60";
+      const initialDot = isLiveActive ? "bg-amber-400" : "bg-slate-500";
+      const initialPing = "hidden";
+      const initialText = isLiveActive ? "التحقق من التشغيل مطلوب" : "معطل";
+      const initialSubtext = isLiveActive ? "حالة الرابط لا تثبت تشغيل الفيديو" : "غير نشط";
 
       const channelLogo = docData.imageUrl || docData.logoUrl || "../assets/images/watania-channel-logo-unified.png";
 
@@ -1525,12 +1525,12 @@ async function mountStreamsPane() {
         }
 
         if (docData.type === "youtube" || url.includes("youtube.com") || url.includes("youtu.be")) {
-          badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-emerald-950/60 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-500/10";
-          if (ping) ping.className = "uptime-ping animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
-          dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-emerald-400";
-          label.textContent = "يوتيوب متاح";
-          subtext.textContent = "جاهزية 100% (YouTube Live)";
-          streamStatusMap.set(docData.id, { isActive: true, latency: 50, isTransientError: false });
+          badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-amber-950/60 text-amber-300 border-amber-500/40";
+          if (ping) ping.className = "uptime-ping hidden";
+          dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-amber-400";
+          label.textContent = "التشغيل غير متحقق";
+          subtext.textContent = "اضغط معاينة لاختبار فيديو YouTube";
+          streamStatusMap.set(docData.id, { isActive: true, latency: 0, isTransientError: false });
           updateHighestAlertRow();
           return;
         }
@@ -1543,12 +1543,12 @@ async function mountStreamsPane() {
           await fetch(url, { method: "HEAD", mode: "no-cors", signal: controller.signal });
           clearTimeout(timeoutId);
           const latency = Math.max(12, Math.round(performance.now() - startTime));
-          badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-emerald-950/60 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-500/10";
-          if (ping) ping.className = "uptime-ping animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
-          dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-emerald-400";
-          label.textContent = "متصل وجاهز";
-          subtext.textContent = `استجابة ~${latency}ms • متاح`;
-          streamStatusMap.set(docData.id, { isActive: true, latency, isTransientError: false });
+          badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-amber-950/60 text-amber-300 border-amber-500/40";
+          if (ping) ping.className = "uptime-ping hidden";
+          dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-amber-400";
+          label.textContent = "استجابة شبكة فقط";
+          subtext.textContent = `~${latency}ms • اضغط معاينة للتحقق من التشغيل`;
+          streamStatusMap.set(docData.id, { isActive: true, latency: 0, isTransientError: false });
           updateHighestAlertRow();
         } catch (err) {
           const latency = Math.round(performance.now() - startTime);
@@ -1561,12 +1561,12 @@ async function mountStreamsPane() {
             streamStatusMap.set(docData.id, { isActive: true, latency, isTransientError: true });
             updateHighestAlertRow();
           } else {
-            badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-cyan-950/60 text-cyan-300 border-cyan-500/40";
-            if (ping) ping.className = "uptime-ping animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75";
-            dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-cyan-400";
-            label.textContent = "بث نشط";
-            subtext.textContent = `خادم CDN نشط • ${latency}ms`;
-            streamStatusMap.set(docData.id, { isActive: true, latency, isTransientError: false });
+            badge.className = "uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 bg-amber-950/60 text-amber-300 border-amber-500/40";
+            if (ping) ping.className = "uptime-ping hidden";
+            dot.className = "uptime-dot status-dot relative inline-flex rounded-full h-2 w-2 bg-amber-400";
+            label.textContent = "تعذر التحقق";
+            subtext.textContent = `تعذر فحص الخادم (${latency}ms)؛ جرّب المعاينة`;
+            streamStatusMap.set(docData.id, { isActive: true, latency: 0, isTransientError: false });
             updateHighestAlertRow();
           }
         }
