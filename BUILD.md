@@ -39,6 +39,8 @@
 
 استخدم Android Studio حديثاً مع JDK 17 وAndroid SDK 36. يبقى إعداد Firebase خارج Git. عند البناء المحلي، ضع ملف `google-services.json` الذي يملكه صاحب المشروع في المسار القياسي محلياً فقط، ولا تضعه في Kotlin أو XML أو KTS ولا ترفعه إلى المستودع.
 
+لا يُنتج المشروع APK/AAB قابلاً للتثبيت من دون `google-services.json` للتطبيق `com.elwataniatv.app`: البث وقائمة القنوات تُحمّلان من Firestore. يمكن تشغيل اختبارات الوحدة من دون الملف، لكن يلزم ملف Android الصحيح للبناء والتشغيل الفعلي. ضع الملف محلياً في `app/google-services.json` ولا ترفعه إلى Git.
+
 المصدر الحالي وصفحة التحميل العامة يعكسان `versionCode = 30` و`versionName = "8.6.0"`، لكن سجل 12 سبتمبر يوثق إصداراً موقّعاً ومتاحاً للتنزيل برقم `versionCode 38`. لا تُعد نشر 30؛ فهو أقل من الإصدار الموثق ولا يحدّثه Android. قبل إصدار جديد، تحقق من Play Console، واستخدم رقماً أعلى من 38 (39 على الأقل وفق السجل المتاح) وبصمة شهادة التوقيع الكاملة نفسها. يتضمن الإصدار أصول شعار القناة الموحد في `assets/images/watania-channel-logo-unified.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo_foreground.png`. يستخدم `AndroidManifest.xml` الاسم الصريح `@mipmap/ic_launcher_watania` لتجنب بقاء أيقونة launcher قديمة في cache. كما تم تحسين RTL، توسيع مساحة شريط التنقل للعربية، حجب القيم التجريبية في المصدر والواجهة، وربط زر الأخبار بوجهة YouTube.
 
 ## البناء والاختبارات
