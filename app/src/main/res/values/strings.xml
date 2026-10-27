@@ -131,6 +131,7 @@
     <string name="program_guide">Program guide</string>
     <string name="archive">Archive</string>
     <string name="stream_channels">Streaming channels</string>
+    <string name="toggle_live_channel_panel">Show or hide the channel list</string>
     <string name="playing_now">Playing now</string>
     <string name="archive_title">Elwatania TV Archive</string>
     <string name="archive_subtitle">Programmes and bulletins you can revisit anytime</string>

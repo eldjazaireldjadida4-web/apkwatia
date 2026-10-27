@@ -147,6 +147,7 @@
     <string name="program_guide">دليل البرامج</string>
     <string name="archive">الأرشيف</string>
     <string name="stream_channels">قنوات البث</string>
+    <string name="toggle_live_channel_panel">إظهار أو إخفاء قائمة القنوات</string>
     <string name="playing_now">قيد التشغيل</string>
     <string name="archive_title">أرشيف الوطنية TV</string>
     <string name="archive_subtitle">البرامج والنشرات التي يمكنك الرجوع إليها في أي وقت</string>

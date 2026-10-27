@@ -205,6 +205,11 @@ class LiveScreenTest {
         composeTestRule.onNodeWithTag("channel_switcher").assertExists()
         composeTestRule.onNodeWithTag("live_video_player").assertExists()
         composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(300.dp)
+        composeTestRule.onNodeWithTag("channel_panel_toggle").performClick()
+        composeTestRule.onNodeWithTag("channel_switcher").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(500.dp)
+        composeTestRule.onNodeWithTag("channel_panel_toggle").performClick()
+        composeTestRule.onNodeWithTag("channel_switcher").assertExists()
     }
 
     @Test

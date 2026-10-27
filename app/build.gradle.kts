@@ -55,8 +55,8 @@ android {
         applicationId = "com.elwataniatv.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 39
-        versionName = "8.6.1"
+        versionCode = 40
+        versionName = "8.6.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
