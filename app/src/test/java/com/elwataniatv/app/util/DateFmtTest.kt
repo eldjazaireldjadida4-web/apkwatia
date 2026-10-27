@@ -16,9 +16,9 @@ class DateFmtTest {
         }
 
     private val today: Calendar = calendarFor(2026, 9, 12)
-    private val arLocale = Locale("ar")
-    private val frLocale = Locale("fr")
-    private val enLocale = Locale("en")
+    private val arLocale = Locale.forLanguageTag("ar")
+    private val frLocale = Locale.forLanguageTag("fr")
+    private val enLocale = Locale.forLanguageTag("en")
 
     @Test
     fun formatsIsoDateWithAlgerianMonthNames() {
