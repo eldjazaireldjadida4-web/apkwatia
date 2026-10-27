@@ -67,19 +67,15 @@ if (firebaseConfig.appId && !String(firebaseConfig.appId).includes(":web:")) {
   fail(`refusing to build: appId is not a web app id (${firebaseConfig.appId})`);
 }
 
-const missingAllSecrets = !firebaseConfig.apiKey && !firebaseConfig.appId && !firebaseConfig.messagingSenderId;
-if (missingAllSecrets) {
-  console.warn("Building the admin artifact without Firebase web secrets; the panel will remain in offline/demo mode.");
-}
-
 const missingFirebaseFields = ["apiKey", "messagingSenderId", "appId"]
   .filter((field) => !firebaseConfig[field]);
 if (missingFirebaseFields.length) {
-  console.warn(`Firebase config fields unavailable: ${missingFirebaseFields.join(", ")}.`);
+  fail(`required Firebase Web config fields missing: ${missingFirebaseFields.join(", ")}`);
 }
 
 const entries = [
   [path.join(rootDir, "admin", "index.html"), path.join(outputDir, "admin", "index.html"), "file"],
+  [path.join(rootDir, "admin", "stream-preview.js"), path.join(outputDir, "admin", "stream-preview.js"), "file"],
   [path.join(rootDir, "privacy.html"), path.join(outputDir, "privacy.html"), "file"],
   [path.join(rootDir, "download.html"), path.join(outputDir, "download.html"), "file"],
   [path.join(rootDir, "assets"), path.join(outputDir, "assets"), "directory"],
@@ -113,27 +109,57 @@ fs.writeFileSync(
   "utf8"
 );
 
-// Firebase Spark Hosting rejects executable files such as APKs. Keep the
-// signed APK in the private repository, but publish only a Base64 text
-// payload; the landing page reconstructs it locally after the user clicks.
+const https = require("https");
+const { createHash } = require("crypto");
 const downloadsOutput = path.join(outputDir, "assets", "downloads");
-const releaseApk = path.join(rootDir, "app", "build", "outputs", "apk", "release", "app-release.apk");
-if (fs.existsSync(releaseApk)) {
-  fs.mkdirSync(downloadsOutput, { recursive: true });
-  fs.copyFileSync(releaseApk, path.join(downloadsOutput, "ElwataniaTV-v8.6.0-release.apk"));
-}
-if (fs.existsSync(downloadsOutput)) {
-  for (const apkName of fs.readdirSync(downloadsOutput).filter((name) => name.toLowerCase().endsWith(".apk"))) {
-    const apkOutput = path.join(downloadsOutput, apkName);
-    const payload = fs.readFileSync(apkOutput).toString("base64");
-    fs.rmSync(apkOutput);
-    fs.writeFileSync(`${apkOutput}.txt`, payload, "utf8");
-  }
+const currentDownloadName = "ElwataniaTV-v8.6.0-release.apk.txt";
+const currentDownloadUrl = "https://elwataniatvapp.web.app/assets/downloads/ElwataniaTV-v8.6.0-release.apk.txt";
+const currentDownloadSha256 = "13b6ce5deccb25fc5794c640841c29873295eab865d17ebf6cf66b38b0405a72";
+
+function fetchCurrentDownload() {
+  return new Promise((resolve, reject) => {
+    const request = https.get(currentDownloadUrl, { timeout: 30_000 }, (response) => {
+      if (response.statusCode !== 200) {
+        response.resume();
+        reject(new Error(`current public APK download returned HTTP ${response.statusCode}`));
+        return;
+      }
+      let payload = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => { payload += chunk; });
+      response.on("end", () => resolve(payload.trim()));
+    });
+    request.on("timeout", () => request.destroy(new Error("timed out fetching the current public APK")));
+    request.on("error", reject);
+  });
 }
 
-console.log("Firebase Hosting tree built from allowlist:");
-console.log("- admin/index.html -> admin/hosting-dist/admin/index.html");
-console.log("- Firebase config injected inline -> admin/hosting-dist/admin/index.html");
-console.log("- privacy.html -> admin/hosting-dist/privacy.html");
-console.log("- download.html -> admin/hosting-dist/download.html");
-console.log("- assets/ -> admin/hosting-dist/assets/");
+async function preserveCurrentDownload() {
+  const localPayloadPath = process.env.PUBLIC_DOWNLOAD_PAYLOAD_PATH;
+  const payload = localPayloadPath
+    ? fs.readFileSync(path.resolve(localPayloadPath), "utf8").trim()
+    : await fetchCurrentDownload();
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) {
+    fail("current public APK payload is not valid Base64");
+  }
+  const apkBytes = Buffer.from(payload, "base64");
+  if (!apkBytes.length || apkBytes.toString("base64") !== payload) {
+    fail("current public APK payload is not canonical Base64");
+  }
+  const sha256 = createHash("sha256").update(apkBytes).digest("hex");
+  if (sha256 !== currentDownloadSha256) {
+    fail("current public APK checksum changed; review the download page before publishing Hosting");
+  }
+  fs.mkdirSync(downloadsOutput, { recursive: true });
+  fs.writeFileSync(path.join(downloadsOutput, currentDownloadName), payload, "utf8");
+}
+
+preserveCurrentDownload().then(() => {
+  console.log("Firebase Hosting tree built from allowlist; existing public download preserved unchanged:");
+  console.log("- admin/index.html -> admin/hosting-dist/admin/index.html");
+  console.log("- Firebase config injected inline -> admin/hosting-dist/admin/index.html");
+  console.log("- privacy.html -> admin/hosting-dist/privacy.html");
+  console.log("- download.html -> admin/hosting-dist/download.html");
+  console.log("- existing release APK payload -> admin/hosting-dist/assets/downloads/" + currentDownloadName);
+  console.log("- assets/ -> admin/hosting-dist/assets/");
+}).catch((error) => fail(`failed to preserve current public download: ${error.message}`));

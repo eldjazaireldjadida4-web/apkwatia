@@ -30,6 +30,8 @@ firebase login
 
 `admin/index.html` يستخدم تهيئة Web العامة للمشروع الرسمي تلقائياً، بينما تم حذف زر وشاشة إعداد Firebase من واجهة المسؤول حتى لا تتم إعادة تغيير المشروع بالخطأ. هذه التهيئة ليست service-account credential ولا تمنح صلاحية إدارة وحدها؛ الوصول الفعلي محكوم بـFirebase Authentication وFirestore Rules وcustom claim `admin: true`.
 
+قبل النشر، وفّر إعداد تطبيق Web المحلي في `admin/firebase-config.js` (هذا الملف مستثنى من Git)، أو مرّر متغيرات البيئة `FIREBASE_WEB_API_KEY`, `FIREBASE_WEB_AUTH_DOMAIN`, `FIREBASE_WEB_PROJECT_ID`, `FIREBASE_WEB_STORAGE_BUCKET`, `FIREBASE_WEB_MESSAGING_SENDER_ID`, و`FIREBASE_WEB_APP_ID`. استخدم إعداد تطبيق Web المسجّل في Firebase Console؛ يجب أن يبدأ `appId` بـ`1:` ويتضمن `:web:`. `scripts/build-hosting.js` يرفض النشر إذا غابت الحقول الأساسية، حتى لا تصبح اللوحة منشورة بوضع تجريبي غير متصل. إعداد Web عام، وليس مفتاح Admin؛ لا تضع service-account JSON أو private key هنا.
+
 تظهر للمسؤول حالة اتصال مختصرة فقط، ولا تُعرض حقول API Key أو Project ID أو إعدادات Firebase في شاشة الدخول. لا تضع service-account JSON أو كلمة مرور أو private key في المستودع أو داخل `index.html`.
 
 ## 📤 النشر

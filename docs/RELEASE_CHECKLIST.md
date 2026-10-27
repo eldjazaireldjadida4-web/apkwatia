@@ -1,27 +1,29 @@
-# Release Checklist — v8.6.3 / versionCode 41
+# Release Checklist — v8.6.4 / versionCode 42
 
-## مكتمل محلياً
+## Verified in the source and build
 
-- [x] حزمة التطبيق: `com.elwataniatv.app`.
-- [x] `targetSdk 36` ومرشح الإصدار `8.6.3 / 41`.
-- [x] 69 اختبار وحدة ناجحاً، وتجميع اختبارات Android ناجح.
-- [x] `lintDebug` و`lintRelease` و`assembleDebug` و`bundleRelease` نجحت.
-- [x] التعليقات العامة معطّلة في Release حتى استيفاء متطلبات المحتوى الذي ينشئه المستخدم.
-- [x] عدم تخزين تعليق محلياً عند فشل إرساله إلى Firebase.
-- [x] تحسين تخطيط المشغّل الأفقي وقائمة القنوات.
+- [x] Package: `com.elwataniatv.app`; `targetSdk 36` for Google Play's 2026 requirement.
+- [x] Release builds now fail if a signing keystore or any required signing value is missing.
+- [x] Release configuration reads `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD` from protected Gradle properties or environment variables; no signing secret belongs in Git.
+- [x] Public comments remain disabled in Release until terms, reporting, blocking, and ongoing moderation are implemented.
+- [x] Admin stream preview validates HTTP(S)/YouTube links, reports playback states honestly, and no longer trusts raw Firestore values in link/color markup.
+- [x] Admin preview tests and CI workflow are present.
+- [x] 69 Android unit tests, 30 Firestore rules tests, and 3 admin-preview tests passed; `lintDebug`, `lintRelease`, and Android UI-test compilation passed.
+- [x] Admin Hosting was deployed and verified with the required CSP headers; the login page loads without browser JavaScript errors. The public download asset was preserved.
 
-## ممنوع النشر قبل إكماله
+## Required before uploading to Play
 
-- [ ] **توقيع Play:** لا يحتوي المشروع على مفتاح إنتاج. `app-release.aab` الحالي غير موقّع، ولا يصلح للرفع.
-- [ ] **حسم استمرارية التوقيع:** شهادة APK المتاح على صفحة التنزيل تختلف عن شهادة Debug. للحصول على تحديث مباشر للنسخ المثبتة، يلزم مفتاح الإصدار الأصلي. إذا تعذر استرجاعه، حدّد أثر الانتقال إلى مفتاح Play جديد وإعادة التثبيت للمستخدمين الحاليين قبل المتابعة.
-- [ ] **رقم الإصدار:** تحقق من أعلى `versionCode` في Play Console قبل اعتماد `41`.
-- [ ] **اختبار الجهاز:** أعد اختبار تثبيت نسخة Play الموقعة وتشغيل الصوت والصورة وتبديل القناة والرجوع من الخلفية على BlueStacks 5 وجهاز Android حقيقي.
-- [ ] **لقطات المتجر:** التقط لقطات أصلية من الإصدار النهائي؛ لا تستخدم لقطات من APK أقدم.
-- [ ] **سياسة الخصوصية:** راجع `PRIVACY_POLICY_AR.md` و`privacy.html` وانشرهما على Firebase Hosting بعد اعتماد النص.
-- [ ] **بيانات المتجر:** أكمل Data safety، تصنيف المحتوى، جمهور التطبيق، تفاصيل الاتصال، ووصف المتجر بناءً على الخدمات الفعلية.
-- [ ] **Firebase الإنتاجي:** تحقق من Anonymous Auth وApp Check وقواعد Firestore المنشورة، ومن أن البث الفعلي وروابط القنوات وحقوق استخدامها سليمة.
-- [ ] **الإشعارات:** تحقق من إعداد FCM وبيانات الاعتماد على بيئة الإنتاج قبل الوعد بميزة تعمل في Release.
-- [ ] **مراجعة التحذيرات:** لا توجد أخطاء lint مانعة، لكن تبقى تحذيرات اعتماديات وموارد غير مستخدمة؛ راجع تقرير `lint-results-release.html` قبل النشر.
-- [ ] **اختبار Play داخلي:** ارفع AAB موقّعاً إلى مسار الاختبار الداخلي، وثبّته من Play، ثم راقب الأعطال قبل الإنتاج.
+- [ ] Confirm the app's current highest `versionCode`, whether a Play listing already exists for this package, and its Play App Signing state.
+- [ ] First Play release: create one listing for `com.elwataniatv.app`, enroll in Play App Signing, and use the new upload key.
+- [ ] Existing listing with Play App Signing: submit the provided upload certificate in **Request upload key reset** and wait for Google's approval. The new key is an upload key, not the app-signing key.
+- [ ] Existing legacy listing without Play App Signing: do not use the new key as a replacement; recover the original key or resolve the case with Play Support.
+- [ ] Only after the applicable step above, upload `ElWataniaTV-v8.6.4-release-upload-signed-42.aab` to Internal testing.
+- [ ] Install the build from Play Internal testing; verify launch, landscape playback, audio/video, stream switching, background/return, and update behavior on BlueStacks 5 and a physical Android device.
+- [ ] Capture genuine screenshots from the final app build; no placeholder screenshots are acceptable.
+- [ ] Complete Data safety, content rating, target audience, store listing, privacy policy, and any Play declarations using the actual release behavior.
+- [ ] Confirm the right to distribute every live stream and archive item.
+- [ ] Only after internal testing, decide whether to update the public download page; its current APK is older and has a different signing identity.
 
-الصفحة العامة `https://elwataniatvapp.web.app/download` ما زالت تشير إلى إصدار أقدم؛ لا تحدّثها قبل اعتماد ملف Release موقّع واختبار تحديثه.
+## Signing files
+
+The upload keystore, PEM certificate, and credentials are in the private workspace folder `Projects/apkwatia/release-signing/`, outside the repository. Never commit or publicly share the keystore or its passwords. Keep a second secure backup before deleting the local copy.

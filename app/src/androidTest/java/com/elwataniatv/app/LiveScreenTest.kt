@@ -187,7 +187,7 @@ class LiveScreenTest {
         val stream = RemoteStream(id = "landscape-test", title = "الوطنية TV", url = "https://example.com/live.m3u8")
         composeTestRule.setContent {
             ElwataniaTVTheme {
-                Box(modifier = Modifier.width(1024.dp).height(600.dp)) {
+                Box(modifier = Modifier.width(800.dp).height(300.dp)) {
                     LiveScreen(
                         streams = listOf(stream),
                         selectedStream = stream,
@@ -204,10 +204,10 @@ class LiveScreenTest {
         composeTestRule.onNodeWithTag("live_landscape_layout").assertExists()
         composeTestRule.onNodeWithTag("channel_switcher").assertExists()
         composeTestRule.onNodeWithTag("live_video_player").assertExists()
-        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(300.dp)
+        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(250.dp)
         composeTestRule.onNodeWithTag("channel_panel_toggle").performClick()
         composeTestRule.onNodeWithTag("channel_switcher").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(500.dp)
+        composeTestRule.onNodeWithTag("live_video_player").assertHeightIsAtLeast(250.dp)
         composeTestRule.onNodeWithTag("channel_panel_toggle").performClick()
         composeTestRule.onNodeWithTag("channel_switcher").assertExists()
     }

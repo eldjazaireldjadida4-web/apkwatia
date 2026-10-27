@@ -204,6 +204,10 @@
     <string name="archive_search_tip">Essayez d\'autres termes de recherche ou changez de catégorie.</string>
     <string name="archive_admin_tip">De nouveaux programmes sont ajoutés régulièrement à l\'archive.</string>
     <string name="refresh_data">Actualiser les données</string>
+    <plurals name="live_channel_count">
+        <item quantity="one">%1$d chaîne</item>
+        <item quantity="other">%1$d chaînes</item>
+    </plurals>
     <string name="play">Lire</string>
     <string name="watch_video_in_app">Regarder la vidéo dans l\'application</string>
     <string name="favorites">Favoris</string>

@@ -7,6 +7,21 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+fun signingValue(name: String): String? =
+    providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
+        ?: providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("RELEASE_STORE_FILE")
+val releaseStorePassword = signingValue("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = signingValue("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = signingValue("RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 val googleServicesFile = rootProject.file("google-services.json")
 val appGoogleServicesFile = file("google-services.json")
 val hasGoogleServices = googleServicesFile.exists() || appGoogleServicesFile.exists()
@@ -55,8 +70,8 @@ android {
         applicationId = "com.elwataniatv.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 41
-        versionName = "8.6.3"
+        versionCode = 42
+        versionName = "8.6.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -66,21 +81,6 @@ android {
 
     // Release signing is opt-in. Values may come from Gradle properties or
     // environment variables; no secret or keystore is stored in this repo.
-    fun signingValue(name: String): String? =
-        providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
-            ?: providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
-
-    val releaseStoreFile = signingValue("RELEASE_STORE_FILE")
-    val releaseStorePassword = signingValue("RELEASE_STORE_PASSWORD")
-    val releaseKeyAlias = signingValue("RELEASE_KEY_ALIAS")
-    val releaseKeyPassword = signingValue("RELEASE_KEY_PASSWORD")
-    val hasReleaseSigning = listOf(
-        releaseStoreFile,
-        releaseStorePassword,
-        releaseKeyAlias,
-        releaseKeyPassword
-    ).all { it != null }
-
     fun resolveReleaseStoreFile(path: String): File {
         val appRelative = file(path)
         return if (appRelative.exists()) appRelative else rootProject.file(path)
@@ -225,4 +225,25 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+tasks.register("validateReleaseSigning") {
+    doLast {
+        if (!hasReleaseSigning) {
+            throw GradleException(
+                "Release APK/AAB builds require RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD."
+            )
+        }
+        val path = releaseStoreFile ?: throw GradleException("RELEASE_STORE_FILE is required.")
+        val candidates = listOf(file(path), rootProject.file(path))
+        if (candidates.none { it.isFile }) {
+            throw GradleException("The configured release keystore file does not exist.")
+        }
+    }
+}
+
+tasks.matching {
+    it.name in setOf("assembleRelease", "bundleRelease", "packageRelease", "packageReleaseBundle")
+}.configureEach {
+    dependsOn("validateReleaseSigning")
 }

@@ -1,21 +1,12 @@
 <!doctype html>
 <!--
   ═══════════════════════════════════════════════════════════════════
-   لوحة تحكم الوطنية TV — صفحة المسؤول الوحيدة (Self-Hosted)
-  ═══════════════════════════════════════════════════════════════════
-  • هذه الصفحة مستضافة ذاتياً (standalone HTML) ولا تُخدم عبر أي
-    خادم ويب. جميع البيانات تُقرأ وتُكتب مباشرة من/إلى Firebase.
-  • تستخدم جلسة المصادقة (Firebase Auth + Custom Claims) لمنح
-    المسؤول صلاحية تعديل المحتوى.
-  • تحذيرات أمنية:
-    - البيانات الحسّاسة (Firebase config, Admin credentials) لا
-      تُخزن إلا في localStorage ولا تُرسَل لأي طرف ثالث.
-    - جميع نقاط إدخال البيانات تستخدم escapeHtml() لمنع XSS.
-    - تم تثبيت إصدار hls.js (1.6.16) مع SRI لمنع هجمات
-      supply-chain عبر CDN.
-    - Tailwind يُحمّل عبر CDN (ضرورة لعدم وجود build step) —
-      مع إضافة crossorigin="anonymous". لا يمكن إضافة SRI هنا
-      لأن Tailwind CDN يغيّر المحتوى ديناميكياً حسب الإعدادات.
+  لوحة تحكم الوطنية TV — صفحة إدارة ثابتة على Firebase Hosting
+  • تتصل مباشرة بـ Firebase Authentication وFirestore؛ لا يوجد خادم وسيط.
+  • إعداد Firebase Web عام؛ لا يُضمَّن مفتاح Admin SDK أو سرّ خادمي.
+  • صلاحيات المحتوى محمية بالمصادقة وقواعد Firestore المنشورة.
+  • تُتحقق المدخلات وتُهَرَّب قبل عرضها، وتُفتح الروابط الخارجية بأمان.
+  • hls.js مثبت على إصدار 1.6.16 ومتحقق عبر SRI.
   ═══════════════════════════════════════════════════════════════════
 -->
 <html lang="ar" dir="rtl">
@@ -27,29 +18,6 @@
 <link rel="alternate icon" href="../assets/images/android-icon-foreground.png" type="image/png" />
 <!-- Google Fonts Cairo -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-<!-- Tailwind CSS CDN + Brand Theme Config -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        colors: {
-          brand: {
-            primary: '#0A7EA4',
-            primaryHover: '#0E94C4',
-            panel: '#151C2C',
-            border: '#242F47',
-            danger: '#DC2626'
-          }
-        },
-        fontFamily: {
-          sans: ['Cairo', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
-        }
-      }
-    }
-  }
-</script>
 <!-- HLS.js v1.6.16 (pinned) for Live Stream Preview Monitor -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js" crossorigin="anonymous" integrity="sha384-5E8B0pTlZZJMabWpC0fyYf6OUpe15jJij34BqBAh4NXoHAlLNOjCPRrwtOXOQFAn"></script>
 <style>
@@ -249,7 +217,7 @@ html[dir="rtl"] body{direction:rtl;text-rendering:optimizeLegibility;-webkit-fon
       <img src="../assets/images/watania-channel-logo-unified.png" alt="الوطنية TV" class="w-9 h-9 rounded-lg" />
       <div>
         <h1 class="text-lg font-black text-white">لوحة إدارة تطبيق الوطنية TV</h1>
-        <p class="text-[10px] text-slate-400">المزغردة والمنظمة لجميع بيانات الهواتف الذكية</p>
+        <p class="text-[10px] text-slate-400">إدارة البث والمحتوى والإعدادات من مكان واحد</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
@@ -305,7 +273,7 @@ html[dir="rtl"] body{direction:rtl;text-rendering:optimizeLegibility;-webkit-fon
   <footer class="bg-brand-panel/80 border-t border-brand-border/30 px-6 py-2 text-[10px] text-slate-500 flex items-center justify-between">
     <span class="flex items-center gap-1.5"><img src="../assets/images/watania-channel-logo-unified.png" alt="" class="w-4 h-4 rounded inline" /> الوطنية TV © 2026</span>
     <span class="hidden md:inline">⌨️ Ctrl+1-9 للتنقل بين اللوحات · 📥 أزرار التصدير لكل قسم</span>
-    <span id="footerStatus">🟢 لوحة التحكم v10.1 — إصدار التطبيق 8.6.0</span>
+    <span id="footerStatus">🟢 لوحة التحكم v10.2 — إصدار التطبيق 8.6.4 (42)</span>
   </footer>
 </section>
 
@@ -335,7 +303,8 @@ window.addEventListener('scroll', () => {
   </div>
 </div>
 
-<script src="./firebase-config.js?v=8.6.0-20260911"></script>
+<script src="./stream-preview.js?v=8.6.4-20261027"></script>
+<script src="./firebase-config.js?v=8.6.4-20261027"></script>
 <script type="module">
 // ============================================================
 // Firebase Web Configuration
@@ -573,6 +542,17 @@ function escapeHtml(s) {
 // Firestore values must never be interpolated into HTML attributes or CSS raw.
 function escapeAttr(s) {
   return escapeHtml(String(s ?? "")).replace(/`/g, "&#96;");
+}
+
+function safeHttpUrl(value) {
+  return window.WataniaStreamPreview?.normalizePreviewUrl(value)?.href ?? "";
+}
+
+function safeImageSource(value) {
+  const safeUrl = safeHttpUrl(value);
+  if (safeUrl) return safeUrl;
+  const data = String(value ?? "").trim();
+  return /^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(data) ? data : "";
 }
 
 function sanitizeHex(color, fallback = "#0a7ea4") {
@@ -1261,57 +1241,104 @@ $$("#tabs button").forEach((btn) => {
    ========================================== */
 let hlsInstance = null;
 
-function playActiveStream(url, title) {
+function playActiveStream(rawUrl, title, type = "m3u8") {
   const video = $("#previewPlayer");
+  const frame = $("#previewFrame");
   const placeholder = $("#playerPlaceholder");
+  const placeholderMessage = $("#playerPlaceholderMessage");
   const overlay = $("#playingOverlay");
-  
-  if (!video) return;
-  
-  video.classList.remove("hidden");
+  const statusLabel = $("#playingStatusLabel");
+  const name = String(title || "القناة").trim() || "القناة";
+  const previewTools = window.WataniaStreamPreview;
+  const parsedUrl = previewTools?.normalizePreviewUrl(rawUrl);
+  if (!parsedUrl) {
+    if (placeholderMessage) placeholderMessage.textContent = "رابط البث غير صالح. أضف رابطاً يبدأ بـ https:// أو http://.";
+    placeholder?.classList.remove("hidden");
+    video?.classList.add("hidden");
+    frame?.classList.add("hidden");
+    overlay?.classList.add("hidden");
+    return;
+  }
+
+  if (!video || !frame || !placeholder || !overlay || !statusLabel) return;
+  if (hlsInstance) {
+    hlsInstance.destroy();
+    hlsInstance = null;
+  }
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+  video.onplaying = null;
+  video.onwaiting = null;
+  video.onerror = null;
+  frame.src = "about:blank";
+  frame.classList.add("hidden");
+  video.classList.add("hidden");
   placeholder.classList.add("hidden");
   overlay.classList.remove("hidden");
   overlay.classList.add("flex");
-  
-  if (hlsInstance) {
-    hlsInstance.destroy();
+  statusLabel.textContent = `جارٍ الاتصال بـ ${name}`;
+
+  const showError = (message) => {
+    statusLabel.textContent = "تعذر تشغيل المعاينة";
+    if (placeholderMessage) placeholderMessage.textContent = message;
+    video.classList.add("hidden");
+    frame.classList.add("hidden");
+    placeholder.classList.remove("hidden");
+  };
+  const isYouTube = previewTools.isYouTubePreview(parsedUrl.href, type);
+
+  if (!isYouTube && parsedUrl.protocol !== "https:") {
+    showError("تتطلب معاينة البث في المتصفح رابط HTTPS. جرّب روابط HTTP مباشرةً على التطبيق.");
+    return;
   }
-  
-  if (Hls.isSupported()) {
-    hlsInstance = new Hls({
-      maxMaxBufferLength: 10,
-      enableWorker: true
+
+  if (isYouTube) {
+    const id = previewTools.youtubeVideoId(parsedUrl.href);
+    if (!id) {
+      showError("رابط YouTube غير صالح. استخدم رابط فيديو أو بث مباشر عام." );
+      return;
+    }
+    frame.title = `معاينة ${name}`;
+    frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&rel=0`;
+    frame.classList.remove("hidden");
+    overlay.classList.add("hidden");
+    return;
+  }
+
+  video.classList.remove("hidden");
+  video.onplaying = () => { statusLabel.textContent = `البث يعمل: ${name}`; };
+  video.onwaiting = () => { statusLabel.textContent = `جارٍ تحميل ${name}…`; };
+  video.onerror = () => showError("لم يبدأ الفيديو. تحقق من صلاحية الرابط أو جرّب معاينة القناة على الجهاز.");
+
+  if (typeof Hls !== "undefined" && Hls.isSupported()) {
+    const player = new Hls({ maxMaxBufferLength: 10, enableWorker: true });
+    hlsInstance = player;
+    player.on(Hls.Events.MANIFEST_PARSED, () => {
+      statusLabel.textContent = `تم تحميل القائمة، جارٍ تشغيل ${name}…`;
+      video.play().catch(() => { statusLabel.textContent = "اضغط زر التشغيل داخل المعاينة."; });
     });
-    hlsInstance.loadSource(url);
-    hlsInstance.attachMedia(video);
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(e => console.log("Autoplay blocked, waiting for interaction", e));
-    });
-    hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-      if (data.fatal) {
-        switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
-            console.error("HLS Live Network error, recovering...");
-            hlsInstance.startLoad();
-            break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            console.error("HLS Live Media error, recovering...");
-            hlsInstance.recoverMediaError();
-            break;
-          default:
-            console.error("HLS Error cannot be recovered, destroying...");
-            hlsInstance.destroy();
-            break;
-        }
+    player.on(Hls.Events.ERROR, (event, data) => {
+      if (!data.fatal || hlsInstance !== player) return;
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        statusLabel.textContent = "انقطع الاتصال؛ جارٍ إعادة المحاولة…";
+        player.startLoad();
+      } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        statusLabel.textContent = "جارٍ استعادة تشغيل الفيديو…";
+        player.recoverMediaError();
+      } else {
+        player.destroy();
+        hlsInstance = null;
+        showError("تعذر تشغيل HLS. قد يمنع خادم البث المعاينة في المتصفح؛ اختبر الرابط على التطبيق والجهاز.");
       }
     });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = url;
-    video.addEventListener('loadedmetadata', () => {
-      video.play().catch(e => console.log("Autoplay blocked, waiting for interaction", e));
-    });
+    player.loadSource(parsedUrl.href);
+    player.attachMedia(video);
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = parsedUrl.href;
+    video.play().catch(() => { statusLabel.textContent = "اضغط زر التشغيل داخل المعاينة."; });
   } else {
-    alert("تنبيه: متصفحك الحالي لا يدعم تشغيل صيغ البث التلفزيوني HLS (m3u8) مباشرة. يرجى استخدام متصفح حديث مثل Chrome أو Edge أو Safari.");
+    showError("هذا المتصفح لا يدعم تشغيل HLS. استخدم Chrome أو Edge أو Safari حديثاً.");
   }
 }
 
@@ -1366,15 +1393,15 @@ async function mountStreamsPane() {
 
         <div class="relative bg-slate-950 rounded-xl border border-brand-border overflow-hidden aspect-video flex items-center justify-center shadow-inner group">
           <video id="previewPlayer" class="w-full h-full object-cover hidden" controls playsinline autoplay muted></video>
+          <iframe id="previewFrame" class="absolute inset-0 w-full h-full hidden" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="معاينة البث"></iframe>
           <div id="playerPlaceholder" class="text-center p-6 space-y-3">
-            <span class="text-5xl block animate-bounce">📺</span>
-            <p class="text-sm font-bold text-slate-300">لم يتم تشغيل أي بث بعد</p>
-            <p class="text-xs text-slate-500 max-w-xs mx-auto">انقر على زر "▶️ معاينة" لأي قناة في الجدول المقابل لبدء تشغيل البث المباشر هنا فوراً.</p>
+            <span class="text-5xl block">📺</span>
+            <p id="playerPlaceholderMessage" class="text-sm font-bold text-slate-300">لم يتم تشغيل أي بث بعد</p>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto">اختر «معاينة» لاختبار الرابط. نجاح فحص الشبكة وحده لا يؤكد تشغيل الفيديو.</p>
           </div>
-          <!-- Playing HUD Overlay -->
           <div id="playingOverlay" class="absolute top-3 right-3 bg-black/75 px-3 py-1 rounded-full text-[10px] font-bold text-emerald-400 border border-emerald-500/20 items-center gap-1.5 hidden">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            بث حي متصل
+            <span id="playingStatusLabel">جارٍ الاتصال بالبث</span>
           </div>
         </div>
 
@@ -1404,7 +1431,7 @@ async function mountStreamsPane() {
     tbody.innerHTML = "";
     const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     if (docs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="empty">لا توجد قنوات بث مضافة في النظام حالياً.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">لا توجد قنوات بث مضافة في النظام حالياً.</td></tr>`;
       return;
     }
 
@@ -1457,7 +1484,7 @@ async function mountStreamsPane() {
       const initialText = isLiveActive ? "التحقق من التشغيل مطلوب" : "معطل";
       const initialSubtext = isLiveActive ? "حالة الرابط لا تثبت تشغيل الفيديو" : "غير نشط";
 
-      const channelLogo = docData.imageUrl || docData.logoUrl || "../assets/images/watania-channel-logo-unified.png";
+      const channelLogo = safeImageSource(docData.imageUrl || docData.logoUrl) || "../assets/images/watania-channel-logo-unified.png";
 
       tr.innerHTML = `
         <td class="text-center">
@@ -1471,7 +1498,7 @@ async function mountStreamsPane() {
           <div class="text-[10px] text-slate-400 font-mono mt-0.5 select-all max-w-[200px] truncate" style="direction: ltr; text-align: right;">${escapeHtml(docData.url)}</div>
         </td>
         <td class="text-center"><span class="${typeColor} border text-[10px] px-2 py-0.5 rounded-full font-bold">${escapeHtml(docData.type || "m3u8")}</span></td>
-        <td class="text-center font-mono text-slate-300 text-xs">${docData.order ?? 0}</td>
+        <td class="text-center font-mono text-slate-300 text-xs">${escapeHtml(docData.order ?? 0)}</td>
         <td class="text-center">
           <div class="stream-uptime-box flex flex-col items-center justify-center gap-1 cursor-pointer select-none" title="انقر لإعادة فحص استجابة الرابط">
             <span class="uptime-badge border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all duration-300 ${initialBadgeColor}">
@@ -1583,7 +1610,7 @@ async function mountStreamsPane() {
       }
 
       tr.querySelector(".play-btn").onclick = () => {
-        playActiveStream(docData.url, docData.title);
+        playActiveStream(docData.url, docData.title, docData.type);
       };
       tr.querySelector(".edit-btn").onclick = () => {
         openModal("تعديل قناة البث (HLS / YouTube)", [
@@ -1868,7 +1895,7 @@ async function mountArchivePane() {
       const expiresAtMs = docData.expiresAt?.toMillis?.() ?? (docData.expiresAt?.seconds ? docData.expiresAt.seconds * 1000 : 0);
       const archiveStatus = docData.isActive === false ? "مخفي" : (publishAtMs > now ? "مجدول" : (expiresAtMs > 0 && expiresAtMs <= now ? "منتهي" : "منشور"));
       const archiveStatusClass = archiveStatus === "منشور" ? "text-emerald-400" : (archiveStatus === "مجدول" ? "text-amber-400" : "text-slate-500");
-      const thumb = escapeAttr(docData.thumbnailUrl || "https://images.unsplash.com/photo-1598257006458-087169a1f08d?w=100");
+      const thumb = escapeAttr(safeImageSource(docData.thumbnailUrl) || "https://images.unsplash.com/photo-1598257006458-087169a1f08d?w=100");
       tr.innerHTML = `
         <td><img src="${thumb}" class="w-14 h-9 object-cover rounded border border-slate-700 shadow-md" alt="cover"></td>
         <td>
@@ -1879,7 +1906,7 @@ async function mountArchivePane() {
         <td class="text-center font-mono text-xs text-slate-300">${escapeHtml(docData.duration ?? "")}</td>
         <td class="text-center text-xs text-slate-400 font-mono">${escapeHtml(docData.date ?? "")}</td>
         <td class="text-center"><span class="text-xs font-bold ${docData.isBreaking ? 'text-red-400' : 'text-slate-400'}">${docData.isBreaking ? 'عاجل' : '#' + Number(docData.editorialPriority ?? 0)}</span></td>
-        <td class="text-center">${extractYoutubeId(docData.youtubeUrl ?? "") ? `<a href="${escapeAttr(docData.youtubeUrl)}" target="_blank" rel="noopener" class="text-red-400 font-mono text-xs hover:underline inline-flex items-center gap-1">🎥 يوتيوب</a>` : `<span class="text-amber-300 text-[10px] font-bold">⚠️ رابط ناقص</span>`}</td>
+        <td class="text-center">${extractYoutubeId(docData.youtubeUrl ?? "") && safeHttpUrl(docData.youtubeUrl) ? `<a href="${escapeAttr(safeHttpUrl(docData.youtubeUrl))}" target="_blank" rel="noopener noreferrer" class="text-red-400 font-mono text-xs hover:underline inline-flex items-center gap-1">🎥 يوتيوب</a>` : `<span class="text-amber-300 text-[10px] font-bold">⚠️ رابط غير صالح</span>`}</td>
         <td class="text-center"><span class="status-dot ${archiveStatus === 'منشور' ? 'status-on' : 'status-off'}"></span><span class="text-xs ${archiveStatusClass}">${escapeHtml(archiveStatus)}</span></td>
         <td>
           <div class="flex items-center justify-end gap-2">
@@ -2112,12 +2139,12 @@ async function mountNewsPane() {
       const tr = el("tr");
       tr.innerHTML = `
         <td class="text-center">
-          ${docData.imageUrl ? `<img src="${escapeAttr(docData.imageUrl)}" alt="" class="w-12 h-9 object-cover rounded-lg border border-white/10" onerror="this.replaceWith(document.createTextNode('📷'))">` : `<span class="text-2xl">📰</span>`}
+          ${safeImageSource(docData.imageUrl) ? `<img src="${escapeAttr(safeImageSource(docData.imageUrl))}" alt="" class="w-12 h-9 object-cover rounded-lg border border-white/10" onerror="this.replaceWith(document.createTextNode('📷'))">` : `<span class="text-2xl">📰</span>`}
         </td>
         <td class="font-bold text-white text-sm max-w-xs line-clamp-2">${escapeHtml(docData.title)}</td>
         <td class="text-xs text-slate-400 max-w-xs line-clamp-2 leading-normal">${escapeHtml(docData.summary ?? "")}</td>
-        <td class="url-cell text-xs font-mono">${docData.url ? `<a href="${escapeAttr(docData.url)}" target="_blank" class="hover:underline font-bold text-sky-400">${escapeHtml(String(docData.url).slice(0, 42))}${String(docData.url).length > 42 ? '…' : ''}</a>` : `<span class="text-slate-600">—</span>`}</td>
-        <td class="text-center font-mono text-slate-300">${docData.order ?? 0}</td>
+        <td class="url-cell text-xs font-mono">${safeHttpUrl(docData.url) ? `<a href="${escapeAttr(safeHttpUrl(docData.url))}" target="_blank" rel="noopener noreferrer" class="hover:underline font-bold text-sky-400">${escapeHtml(String(docData.url).slice(0, 42))}${String(docData.url).length > 42 ? '…' : ''}</a>` : `<span class="text-slate-600">رابط غير صالح</span>`}</td>
+        <td class="text-center font-mono text-slate-300">${escapeHtml(docData.order ?? 0)}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1.5">
             <span class="status-dot ${docData.isActive ? 'status-on' : 'status-off'}"></span>
@@ -2220,7 +2247,7 @@ async function mountWebsitesPane() {
       tr.innerHTML = `
         <td class="text-2xl text-center">${escapeHtml(docData.emoji ?? "🌐")}</td>
         <td class="font-bold text-white text-sm">${escapeHtml(docData.name)}</td>
-        <td class="url-cell text-xs font-mono"><a href="${escapeAttr(docData.url)}" target="_blank" class="hover:underline font-bold" style="color: ${colorHex}">${escapeHtml(docData.url)}</a></td>
+        <td class="url-cell text-xs font-mono">${safeHttpUrl(docData.url) ? `<a href="${escapeAttr(safeHttpUrl(docData.url))}" target="_blank" rel="noopener noreferrer" class="hover:underline font-bold" style="color: ${colorHex}">${escapeHtml(docData.url)}</a>` : `<span class="text-amber-300">رابط غير صالح</span>`}</td>
         <td class="text-xs text-slate-400 max-w-xs line-clamp-1 leading-normal">${escapeHtml(docData.description ?? "")}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1.5">
@@ -2228,7 +2255,7 @@ async function mountWebsitesPane() {
             <span class="font-mono text-xs text-slate-300 uppercase">${colorHex}</span>
           </div>
         </td>
-        <td class="text-center font-mono text-slate-300">${docData.order ?? 0}</td>
+        <td class="text-center font-mono text-slate-300">${escapeHtml(docData.order ?? 0)}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1.5">
             <span class="status-dot ${docData.isActive ? 'status-on' : 'status-off'}"></span>
@@ -2332,17 +2359,17 @@ async function mountSocialPane() {
     }
     docs.forEach(docData => {
       const tr = el("tr");
-      const colorHex = docData.color || "#1877F2";
-      const customImg = (docData.imageUrl || docData.logoUrl || "").trim();
-      const iconHtml = customImg 
-        ? `<img src="${escapeAttr(customImg)}" class="w-9 h-9 rounded-xl object-cover border border-white/20 shadow mx-auto bg-slate-900" onerror="this.outerHTML=getSocialPlatformIconHtml('${escapeAttr(docData.platform || '')}', '${escapeAttr(colorHex)}')">`
+      const colorHex = sanitizeHex(docData.color, "#1877F2");
+      const customImg = safeImageSource(docData.imageUrl || docData.logoUrl);
+      const iconHtml = customImg
+        ? `<img src="${escapeAttr(customImg)}" data-social-icon class="w-9 h-9 rounded-xl object-cover border border-white/20 shadow mx-auto bg-slate-900" alt="">`
         : getSocialPlatformIconHtml(docData.platform, colorHex);
 
       tr.innerHTML = `
         <td class="text-center">${iconHtml}</td>
         <td><span class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-0.5 text-xs text-slate-100 font-bold">${escapeHtml(docData.platform)}</span></td>
         <td class="font-bold text-white text-sm">${escapeHtml(docData.name)}</td>
-        <td class="url-cell text-xs font-mono"><a href="${escapeAttr(docData.url)}" target="_blank" class="hover:underline font-bold" style="color: ${colorHex}">🔗 فتح الرابط</a></td>
+        <td class="url-cell text-xs font-mono">${safeHttpUrl(docData.url) ? `<a href="${escapeAttr(safeHttpUrl(docData.url))}" target="_blank" rel="noopener noreferrer" class="hover:underline font-bold" style="color: ${colorHex}">🔗 فتح الرابط</a>` : `<span class="text-amber-300">رابط غير صالح</span>`}</td>
         <td class="text-xs text-slate-400 max-w-xs line-clamp-1 leading-normal">${escapeHtml(docData.description ?? "")}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1.5">
@@ -2350,7 +2377,7 @@ async function mountSocialPane() {
             <span class="font-mono text-xs text-slate-300 uppercase">${colorHex}</span>
           </div>
         </td>
-        <td class="text-center font-mono text-slate-300">${docData.order ?? 0}</td>
+        <td class="text-center font-mono text-slate-300">${escapeHtml(docData.order ?? 0)}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1.5">
             <span class="status-dot ${docData.isActive ? 'status-on' : 'status-off'}"></span>
@@ -2364,6 +2391,12 @@ async function mountSocialPane() {
           </div>
         </td>
       `;
+      const iconImage = tr.querySelector("[data-social-icon]");
+      iconImage?.addEventListener("error", () => {
+        const fallback = document.createElement("span");
+        fallback.innerHTML = getSocialPlatformIconHtml(docData.platform, colorHex);
+        iconImage.replaceWith(fallback.firstElementChild);
+      }, { once: true });
       tr.querySelector(".edit-btn").onclick = () => {
         openModal("تعديل حساب التواصل", [
           { key: "platform", label: "اسم المنصة", type: "select", options: ["Facebook", "YouTube", "Instagram", "TikTok", "Telegram", "X (Twitter)", "WhatsApp", "أخرى"], value: docData.platform || "Facebook", required: true },
@@ -2662,7 +2695,7 @@ async function mountPushPane() {
         <td class="text-xs text-slate-400 font-mono text-center">${escapeHtml(docData.formattedDate)}</td>
         <td class="font-bold text-slate-200 text-xs leading-normal">${escapeHtml(docData.title)}</td>
         <td class="text-xs text-slate-300 leading-normal max-w-md">${escapeHtml(docData.body)}</td>
-        <td class="text-center">${docData.youtubeUrl ? `<a href="${escapeAttr(docData.youtubeUrl)}" target="_blank" class="text-red-400 text-xs hover:underline">فتح الفيديو</a>` : `<span class="text-slate-500 text-xs">بدون رابط</span>`}</td>
+        <td class="text-center">${safeHttpUrl(docData.youtubeUrl) ? `<a href="${escapeAttr(safeHttpUrl(docData.youtubeUrl))}" target="_blank" rel="noopener noreferrer" class="text-red-400 text-xs hover:underline">فتح الفيديو</a>` : `<span class="text-slate-500 text-xs">بدون رابط صالح</span>`}</td>
         <td class="text-center"><span class="${notificationStatusClass} text-xs font-bold">${escapeHtml(notificationStatus)}</span></td>
         <td>
           <div class="flex items-center justify-end gap-1">
