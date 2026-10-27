@@ -1,5 +1,7 @@
 package com.elwataniatv.app.ui.screens
 
+import com.elwataniatv.app.BuildConfig
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
@@ -556,7 +558,7 @@ fun LiveScreen(
 
 
 
-        if (enableComments) {
+        if (enableComments && BuildConfig.PUBLIC_COMMENTS_ENABLED) {
             item {
                 CommentSection(
                     comments = comments,

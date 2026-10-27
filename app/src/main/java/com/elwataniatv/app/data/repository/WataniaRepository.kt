@@ -1,5 +1,7 @@
 package com.elwataniatv.app.data.repository
 
+import com.elwataniatv.app.BuildConfig
+
 import com.elwataniatv.app.data.local.*
 import com.elwataniatv.app.data.model.*
 import com.elwataniatv.app.data.remote.FirebaseSync
@@ -488,6 +490,10 @@ class WataniaRepository(private val db: AppDatabase, private val appContext: and
 
     suspend fun addComment(author: String, text: String, onResult: ((Boolean, String?) -> Unit)? = null) {
         if (text.isBlank()) return
+        if (!BuildConfig.PUBLIC_COMMENTS_ENABLED) {
+            onResult?.invoke(false, "التعليقات غير متاحة في نسخة المتجر الحالية")
+            return
+        }
 
         // Client-side moderation gate (ProfanityFilter.kt): blocks obvious
         // spam BEFORE any local insert or network call. Client-side only —
@@ -502,14 +508,18 @@ class WataniaRepository(private val db: AppDatabase, private val appContext: and
             return
         }
 
-        db.commentsDao().insertComment(
-            CommentEntity(
-                remoteId = "local-${UUID.randomUUID()}",
-                authorName = if (author.isBlank()) "متابع الوطنية TV" else author,
-                content = text
-            )
-        )
         firebaseSync.postComment("live", author, text) { success, err ->
+            if (success) {
+                repositoryScope.launch {
+                    db.commentsDao().insertComment(
+                        CommentEntity(
+                            remoteId = "local-${UUID.randomUUID()}",
+                            authorName = if (author.isBlank()) "متابع الوطنية TV" else author,
+                            content = text
+                        )
+                    )
+                }
+            }
             onResult?.invoke(success, err)
         }
     }

@@ -1,5 +1,7 @@
 package com.elwataniatv.app.data.remote
 
+import com.elwataniatv.app.BuildConfig
+
 import android.util.Log
 import com.elwataniatv.app.data.local.CommentEntity
 import com.elwataniatv.app.data.model.AdBanner
@@ -103,7 +105,9 @@ class FirebaseSync {
         contentSync.listenWebsites(dbInstance)
         contentSync.listenSocial(dbInstance)
         contentSync.listenArchive(dbInstance)
-        contentSync.listenComments(dbInstance)
+        if (BuildConfig.PUBLIC_COMMENTS_ENABLED) {
+            contentSync.listenComments(dbInstance)
+        }
         contentSync.listenAdBanners(dbInstance)
         contentSync.listenPopupAlert(dbInstance)
         contentSync.listenLiveReactions(dbInstance)

@@ -32,9 +32,25 @@ class InteractionWriteSafetyTest {
         assertFalse(commentSection.contains("commentReactionsEnabled"))
         assertFalse(commentSection.contains("onLikeComment"))
 
-        // Read paths remain present: counters and comments are still displayed.
         assertTrue(firebaseSync.contains("listenLiveReactions"))
         assertTrue(firebaseSync.contains("listenComments"))
+    }
+
+    @Test
+    fun publicCommentsAreDisabledInReleaseBuildAndFailedPostsAreNotCached() {
+        val build = source("app/build.gradle.kts")
+        val firebaseSync = source("app/src/main/java/com/elwataniatv/app/data/remote/FirebaseSync.kt")
+        val contentSync = source("app/src/main/java/com/elwataniatv/app/data/remote/FirestoreContentSync.kt")
+        val repository = source("app/src/main/java/com/elwataniatv/app/data/repository/WataniaRepository.kt")
+        val liveScreen = source("app/src/main/java/com/elwataniatv/app/ui/screens/LiveScreen.kt")
+        val addComment = repository.substringAfter("suspend fun addComment").substringBefore("fun submitFeedback")
+
+        assertTrue(build.contains("buildConfigField(\"boolean\", \"PUBLIC_COMMENTS_ENABLED\", \"false\")"))
+        assertTrue(build.contains("buildConfigField(\"boolean\", \"PUBLIC_COMMENTS_ENABLED\", \"true\")"))
+        assertTrue(firebaseSync.contains("if (BuildConfig.PUBLIC_COMMENTS_ENABLED)"))
+        assertTrue(contentSync.contains("if (!BuildConfig.PUBLIC_COMMENTS_ENABLED)"))
+        assertTrue(liveScreen.contains("enableComments && BuildConfig.PUBLIC_COMMENTS_ENABLED"))
+        assertTrue(addComment.indexOf("firebaseSync.postComment") < addComment.indexOf("commentsDao().insertComment"))
     }
 
     private fun source(relativePath: String): String {

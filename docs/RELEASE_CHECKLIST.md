@@ -1,15 +1,27 @@
-# Release Checklist
+# Release Checklist — v8.6.3 / versionCode 41
 
-The signed v8.6.0 release artifacts are built and verified locally. The following owner-gated items remain before public release:
+## مكتمل محلياً
 
-- [x] **Signed APK/AAB**: build and verify the release-signed Android APK and Play Store App Bundle.
-- [x] **`google-services.json`**: supply the production Firebase configuration through the secure local/CI build process; it remains untracked and is not committed.
-- [ ] **Real-device test**: install the release build on a physical Android device and verify launch, stream playback, fallback behavior, notifications, comments, reminders, and offline/recovery flows.
-- [ ] **Screenshots**: capture current, genuine screenshots from the release candidate for the supported phone layouts and store listing.
-- [ ] **Play Console**: complete the Play Console listing, upload the signed AAB, configure required declarations, testing tracks, content details, and release metadata.
-- [ ] **Firebase Functions**: deploy and verify the production Functions, including moderation and category-targeted push delivery, with logs confirming successful execution.
-- [ ] **App Check Enforcement**: enable and verify Play Integrity enforcement for the Android app, then validate that legitimate release builds can access Firebase services.
-- [ ] **Rules parity**: diff the deployed Firestore Rules against `admin/firestore.rules`, resolve every difference, and record the verified production revision.
-- [ ] **Privacy domain**: make the official privacy-policy domain serve the current policy at its public `/privacy` endpoint and verify the final URL over HTTPS.
-- [ ] **Translations**: replace the cosmetic language selector with complete, tested translations for every language presented to users, or limit the selector to the languages actually supported.
-- [ ] **Official backup stream**: obtain a genuine independent backup stream from the broadcaster/operator, configure it as a separate Firestore stream, and verify automatic failover; do not invent or substitute a URL.
+- [x] حزمة التطبيق: `com.elwataniatv.app`.
+- [x] `targetSdk 36` ومرشح الإصدار `8.6.3 / 41`.
+- [x] 69 اختبار وحدة ناجحاً، وتجميع اختبارات Android ناجح.
+- [x] `lintDebug` و`lintRelease` و`assembleDebug` و`bundleRelease` نجحت.
+- [x] التعليقات العامة معطّلة في Release حتى استيفاء متطلبات المحتوى الذي ينشئه المستخدم.
+- [x] عدم تخزين تعليق محلياً عند فشل إرساله إلى Firebase.
+- [x] تحسين تخطيط المشغّل الأفقي وقائمة القنوات.
+
+## ممنوع النشر قبل إكماله
+
+- [ ] **توقيع Play:** لا يحتوي المشروع على مفتاح إنتاج. `app-release.aab` الحالي غير موقّع، ولا يصلح للرفع.
+- [ ] **حسم استمرارية التوقيع:** شهادة APK المتاح على صفحة التنزيل تختلف عن شهادة Debug. للحصول على تحديث مباشر للنسخ المثبتة، يلزم مفتاح الإصدار الأصلي. إذا تعذر استرجاعه، حدّد أثر الانتقال إلى مفتاح Play جديد وإعادة التثبيت للمستخدمين الحاليين قبل المتابعة.
+- [ ] **رقم الإصدار:** تحقق من أعلى `versionCode` في Play Console قبل اعتماد `41`.
+- [ ] **اختبار الجهاز:** أعد اختبار تثبيت نسخة Play الموقعة وتشغيل الصوت والصورة وتبديل القناة والرجوع من الخلفية على BlueStacks 5 وجهاز Android حقيقي.
+- [ ] **لقطات المتجر:** التقط لقطات أصلية من الإصدار النهائي؛ لا تستخدم لقطات من APK أقدم.
+- [ ] **سياسة الخصوصية:** راجع `PRIVACY_POLICY_AR.md` و`privacy.html` وانشرهما على Firebase Hosting بعد اعتماد النص.
+- [ ] **بيانات المتجر:** أكمل Data safety، تصنيف المحتوى، جمهور التطبيق، تفاصيل الاتصال، ووصف المتجر بناءً على الخدمات الفعلية.
+- [ ] **Firebase الإنتاجي:** تحقق من Anonymous Auth وApp Check وقواعد Firestore المنشورة، ومن أن البث الفعلي وروابط القنوات وحقوق استخدامها سليمة.
+- [ ] **الإشعارات:** تحقق من إعداد FCM وبيانات الاعتماد على بيئة الإنتاج قبل الوعد بميزة تعمل في Release.
+- [ ] **مراجعة التحذيرات:** لا توجد أخطاء lint مانعة، لكن تبقى تحذيرات اعتماديات وموارد غير مستخدمة؛ راجع تقرير `lint-results-release.html` قبل النشر.
+- [ ] **اختبار Play داخلي:** ارفع AAB موقّعاً إلى مسار الاختبار الداخلي، وثبّته من Play، ثم راقب الأعطال قبل الإنتاج.
+
+الصفحة العامة `https://elwataniatvapp.web.app/download` ما زالت تشير إلى إصدار أقدم؛ لا تحدّثها قبل اعتماد ملف Release موقّع واختبار تحديثه.

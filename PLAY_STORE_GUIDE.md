@@ -1,6 +1,6 @@
 # دليل نشر تطبيق الوطنية TV على Google Play Store
 
-دليل عملي خطوة بخطوة لنشر تطبيق Android على Google Play. مصدر الاختبار الآن `v8.6.1 / versionCode 39`، لكن صفحة التحميل العامة لا تزال `v8.6.0 / versionCode 30`، وسجل 12 سبتمبر يوثق إصداراً موقّعاً برقم `versionCode 38`. ملف debug التجريبي لا يستخدم شهادة الإنتاج ولا يصلح للنشر. قبل أي نشر، تحقّق من Play Console واستخدم رقماً أعلى من آخر إصدار فعلي وشهادة التوقيع الأصلية.
+دليل عملي خطوة بخطوة لنشر تطبيق Android على Google Play. مرشح الاختبار الحالي `v8.6.3 / versionCode 41`، لكن لا يوجد Release keystore ولا AAB موقّع. سجل المستودع يوثق إصداراً سابقاً برقم `versionCode 38` وصفحة تحميل عامة على `versionCode 30`؛ تحقق من Play Console قبل اعتماد الرقم. لا ترفع APK debug أو AAB غير موقّع.
 
 ---
 
@@ -14,7 +14,7 @@
 | 📧 **حساب Google** | يفضّل حساب مخصّص للقناة (مثلاً `dev@elwataniatv.dz`) |
 | 🆔 **بطاقة هوية شخصية** | لتوثيق الحساب (للأفراد) |
 | 🏢 **سجل تجاري** | للحسابات التجارية (يفضّل) |
-| 📦 **AAB إصدار Android** | لا يوجد AAB production جاهز؛ مرشح الاختبار `8.6.1` (`versionCode 39`) debug فقط، ويحتاج keystore الإنتاج وتأكيد Play Console قبل النشر |
+| 📦 **AAB إصدار Android** | لا يوجد AAB موقّع؛ مرشح `8.6.3` (`versionCode 41`) يُبنى محلياً لكن يحتاج Upload key صحيحاً وتأكيد Play Console |
 | 🖼️ **أيقونة التطبيق** | `store-assets/icon-512.png` موجودة؛ راجعها قبل الرفع |
 | 🖼️ **Feature Graphic** | `store-assets/feature-graphic.png` موجودة (1024×500) |
 | 📸 **Screenshots** | لا توجد لقطات شاشة محفوظة في المستودع؛ يجب التقاطها من التطبيق الفعلي (1080×1920 لـ Android) |
@@ -148,7 +148,7 @@ Important: the app does not promise HD or continuous 24/7 streaming. Stream avai
    - **Profanity**: لا
    - **Drugs**: لا
    - **Gambling**: لا
-   - **User-generated content**: نعم؛ التطبيق يتيح تعليقات عامة. قبل الإرسال إلى Play يجب عرض شروط استخدام واضحة والحصول على موافقة المستخدم، وإتاحة الإبلاغ عن التعليقات والمستخدمين وحظر المستخدمين ومراجعة المحتوى باستمرار. الإبلاغ والحظر وموافقة الشروط غير موجودة حالياً؛ أوقف النشر حتى تنفيذها أو تعطيل التعليقات. راجع [سياسة Google Play للمحتوى الذي ينشئه المستخدمون](https://support.google.com/googleplay/android-developer/answer/9876937).
+   - **User-generated content**: نسخة Release تعطل التعليقات العامة (`PUBLIC_COMMENTS_ENABLED=false`). لا تفعّلها في Play قبل إضافة شروط وموافقة، وإبلاغ عن المحتوى والمستخدمين، وحظر المستخدمين، ومراجعة مستمرة وفق [سياسة Google Play للمحتوى الذي ينشئه المستخدمون](https://support.google.com/googleplay/android-developer/answer/9876937).
    - **Location sharing**: لا
 3. توقّع التصنيف: `Everyone` أو `Teen`
 
@@ -161,7 +161,7 @@ Important: the app does not promise HD or continuous 24/7 streaming. Stream avai
 
 ### Data safety
 أكمل النموذج بصدق وفق إعدادات الإصدار المنشور فعلياً:
-- **Data collected**: معرّف Firebase مجهول، معرّف تثبيت الجهاز، توكن FCM، التعليقات/الملاحظات التي يرسلها المستخدم، وبيانات تقنية لازمة للتشغيل؛ لا يطلب التطبيق اسماً أو بريداً أو كلمة مرور.
+- **Data collected**: معرّف Firebase مجهول، معرّف تثبيت الجهاز، توكن FCM عند تفعيل الإشعارات، بيانات تقنية لازمة للتشغيل، وملاحظات خاصة يرسلها المستخدم. التعليقات العامة معطّلة في Release؛ أعد تدقيق Data Safety إذا أُعيد تفعيلها.
 - **Data shared with third parties**: تُعالج بعض البيانات عبر Google Firebase لتوفير المصادقة وFirestore وFCM؛ راجع سياسة الخصوصية قبل الإقرار النهائي.
 - **Data is encrypted in transit**: ✅ نعم حيث يدعم المصدر HTTPS/TLS.
 - **Users can request data deletion**: ✅ نعم عبر contact@elwataniatv.dz، مع توضيح نطاق الحذف في نموذج Play.
@@ -177,7 +177,7 @@ Important: the app does not promise HD or continuous 24/7 streaming. Stream avai
 # ينتج: app/build/outputs/bundle/release/app-release.aab
 ```
 
-مرشح الاختبار الحالي `8.6.1` (`versionCode 39`) مبني debug، وليس إصداراً موقّعاً للإنتاج. لا ترفع هذا APK ولا تنفّذ إصداراً للإنتاج قبل تأكيد أعلى versionCode في Play Console وتوفير keystore الإنتاج الأصلي. يجب أن يتجاوز الرقم أعلى إصدار فعلي وأن يطابق شهادة توقيع القناة؛ خزّن مواد التوقيع خارج GitHub وفي بيئة محمية.
+مرشح الاختبار الحالي `8.6.3` (`versionCode 41`) مبني debug. `bundleRelease` أُنشئ محلياً لكنه غير موقّع. لا ترفع أياً منهما قبل تأكيد أعلى `versionCode` في Play Console وضبط Upload key الصحيح؛ خزّن المفتاح وكلمات المرور خارج GitHub.
 
 ### رفع الـ AAB
 1. **Play Console → Release → Production → Create new release**

@@ -55,8 +55,8 @@ android {
         applicationId = "com.elwataniatv.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 40
-        versionName = "8.6.2"
+        versionCode = 41
+        versionName = "8.6.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -105,6 +105,7 @@ android {
 
     buildTypes {
         release {
+            buildConfigField("boolean", "PUBLIC_COMMENTS_ENABLED", "false")
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("releaseConfig")
             }
@@ -116,6 +117,7 @@ android {
             )
         }
         debug {
+            buildConfigField("boolean", "PUBLIC_COMMENTS_ENABLED", "true")
             // Use the committed debug.keystore when present (stable debug signature
             // across machines / CI); otherwise fall back to the auto-generated
             // ~/.android/debug.keystore so a fresh clone always builds.
