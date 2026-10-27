@@ -4,9 +4,9 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 rules="$root_dir/admin/firestore.rules"
 gradle="$root_dir/app/build.gradle.kts"
-ci="$root_dir/.github/workflows/ci.yml"
 hosting_build="$root_dir/scripts/build-hosting.js"
 hosting_config="$root_dir/admin/firebase.json"
+root_hosting_config="$root_dir/firebase.json"
 api_handler="$root_dir/api/handler.js"
 api_security="$root_dir/api/security.js"
 api_main="$root_dir/api/send-push.js"
@@ -29,7 +29,10 @@ require "allow write: if isAdmin()" "$rules"
 require "firebaseSyncScope?.isActive == true" "$root_dir/app/src/main/java/com/elwataniatv/app/data/repository/WataniaRepository.kt"
 require "while (isActive)" "$root_dir/app/src/main/java/com/elwataniatv/app/ui/viewmodel/MainViewModel.kt"
 require "RELEASE_STORE_PASSWORD" "$gradle"
-require "bundleRelease" "$ci"
+require "validateReleaseSigning" "$gradle"
+require 'stream-preview.js' "$root_dir/admin/index.html"
+require stream-preview.js "$hosting_build"
+
 require 'verifyIdToken(token, true)' "$api_main"
 require 'claims?.admin === true' "$api_security"
 require 'claims?.role === "admin"' "$api_security"
@@ -69,6 +72,17 @@ if grep -RInF --exclude='check-security-contracts.sh' "$privacy_official" "${run
 fi
 
 
+require '"source": "admin/**"' "$root_hosting_config"
+require '"Content-Security-Policy"' "$root_hosting_config"
+require '"source": "admin/**"' "$hosting_config"
+require '"Content-Security-Policy"' "$hosting_config"
+require 'https://cdn.jsdelivr.net' "$root_hosting_config"
+require 'connect-src '\''self'\'' https: wss:' "$root_hosting_config"
+require 'media-src '\''self'\'' data: blob: https:' "$root_hosting_config"
+require 'worker-src '\''self'\'' blob:' "$root_hosting_config"
+require 'https://www.youtube-nocookie.com' "$root_hosting_config"
+require 'https://cdn.jsdelivr.net' "$hosting_config"
+require 'media-src '\''self'\'' data: blob: https:' "$hosting_config"
 require '"public": "hosting-dist"' "$hosting_config"
 require '"predeploy": [' "$hosting_config"
 require 'node ../scripts/build-hosting.js' "$hosting_config"
@@ -88,5 +102,7 @@ if git -C "$root_dir" ls-files | grep -E '(^|/)([^/]+\.(jks|keystore|p12|p8|key)
   echo "Tracked signing/Firebase secret file detected" >&2
   exit 1
 fi
+
+node --test "$root_dir/admin/tests/stream-preview.test.js"
 
 echo "Security and release contract checks passed."

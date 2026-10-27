@@ -230,6 +230,11 @@
     <string name="archive_search_tip">Try different search terms or change the category.</string>
     <string name="archive_admin_tip">New programmes are added to the archive on a regular basis.</string>
     <string name="refresh_data">Refresh data</string>
+    <plurals name="live_channel_count">
+        <item quantity="zero">No channels available</item>
+        <item quantity="one">%1$d channel</item>
+        <item quantity="other">%1$d channels</item>
+    </plurals>
     <string name="play">Play</string>
     <string name="watch_video_in_app">Watch video in the app</string>
     <string name="favorites">Favorites</string>

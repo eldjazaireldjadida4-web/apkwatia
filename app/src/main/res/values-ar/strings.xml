@@ -254,6 +254,14 @@
     <string name="archive_search_tip">جرّب البحث بكلمات أخرى أو تغيير اختيار التصنيف.</string>
     <string name="archive_admin_tip">تُضاف البرامج الجديدة إلى الأرشيف بشكل مستمر.</string>
     <string name="refresh_data">تحديث البيانات</string>
+    <plurals name="live_channel_count">
+        <item quantity="zero">لا توجد قنوات متاحة</item>
+        <item quantity="one">قناة واحدة متاحة</item>
+        <item quantity="two">قناتان متاحتان</item>
+        <item quantity="few">%1$d قنوات متاحة</item>
+        <item quantity="many">%1$d قناة متاحة</item>
+        <item quantity="other">%1$d قناة متاحة</item>
+    </plurals>
     <string name="play">تشغيل</string>
     <string name="watch_video_in_app">مشاهدة الفيديو داخل التطبيق</string>
     <string name="favorites">المفضلة</string>

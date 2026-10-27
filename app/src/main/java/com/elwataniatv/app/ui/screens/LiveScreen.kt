@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -188,9 +189,12 @@ fun LiveScreen(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val hasSyncIssue = syncStatus?.isConnected == false || (syncStatus == null && syncError != null)
         val useLandscapePlayerLayout =
-            selectedStream != null && maxWidth >= 700.dp && maxWidth > maxHeight && maxHeight >= 360.dp
+            selectedStream != null &&
+                maxWidth >= 700.dp &&
+                maxWidth > maxHeight * 1.35f &&
+                maxHeight >= 240.dp
         val landscapePlayerHeight =
-            (maxHeight - if (hasSyncIssue) 84.dp else 16.dp).coerceAtLeast(240.dp)
+            (maxHeight - if (hasSyncIssue) 64.dp else 8.dp).coerceAtLeast(190.dp)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -366,7 +370,7 @@ fun LiveScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = "${streams.size} قنوات متوفرة بجودة عالية",
+                                            text = pluralStringResource(R.plurals.live_channel_count, streams.size, streams.size),
                                             color = Color.White.copy(alpha = 0.6f),
                                             fontSize = 10.5.sp,
                                             fontWeight = FontWeight.Medium

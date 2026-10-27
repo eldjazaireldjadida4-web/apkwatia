@@ -77,13 +77,11 @@
 
 ## الخطوة 5 — لوحة الإدارة (الويب)
 
-`admin/index.html` صفحة مستقلة تستضيفها على أي استضافة ثابتة (GitHub Pages / Firebase Hosting):
+تستخدم `admin/index.html` إعداد Web الثابت الخاص بالمشروع `elwataniatvapp`؛ لا توجد شاشة تسمح بتغيير المشروع. بيانات Firebase Web العامة ليست مفتاح Admin ولا تمنح صلاحية بمفردها؛ الوصول الفعلي محكوم بتسجيل Firebase Authentication وFirestore Rules وcustom claim `admin: true`.
 
-1. افتح الصفحة → **إعدادات Firebase**.
-2. أدخل بيانات المشروع (API Key, Project ID, App ID...).
-3. سجّل دخول بحساب المسؤول.
+استضف اللوحة عبر Firebase Hosting باتباع `admin/DEPLOY.md`. لا تضع ملف Service Account JSON أو مفتاحاً خاصاً أو كلمة مرور داخل HTML أو Git.
 
-> 🔒 أمان الصفحة: hls.js مثبّت على إصدار محدد (1.6.16)، وكل مدخلات البيانات تُمرَّر عبر `escapeHtml()` لمنع XSS.
+يُنشئ `scripts/build-hosting.js` إعداد Firebase Web من `admin/firebase-config.js` المحلي المستثنى من Git أو من متغيرات `FIREBASE_WEB_*`. لا يتضمن ذلك مفتاح Admin؛ البناء يوقف النشر إذا غابت بيانات تطبيق Web الأساسية، بدلاً من نشر لوحة غير متصلة.
 
 ---
 
