@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -141,6 +142,7 @@ fun LiveScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var refreshStartedAt by remember { mutableLongStateOf(0L) }
     var switchingStreamId by remember { mutableStateOf<String?>(null) }
+    var showLandscapeChannels by rememberSaveable { mutableStateOf(true) }
     val streamRowState = rememberLazyListState()
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -283,6 +285,8 @@ fun LiveScreen(
                         switchingStreamId = switchingStreamId,
                         isRefreshing = isRefreshing,
                         onRefresh = requestRefresh,
+                        showChannels = showLandscapeChannels,
+                        onToggleChannels = { showLandscapeChannels = !showLandscapeChannels },
                         onSelectStream = { item ->
                             if (item.id != activeStream.id) {
                                 switchingStreamId = item.id
@@ -1410,7 +1414,9 @@ private fun LandscapeLivePlayer(
     streams: List<RemoteStream>,
     switchingStreamId: String?,
     isRefreshing: Boolean,
+    showChannels: Boolean,
     onRefresh: () -> Unit,
+    onToggleChannels: () -> Unit,
     onSelectStream: (RemoteStream) -> Unit,
     onShareLive: (RemoteStream) -> Unit,
     modifier: Modifier = Modifier
@@ -1425,112 +1431,124 @@ private fun LandscapeLivePlayer(
                 .fillMaxWidth()
                 .testTag("live_landscape_layout")
                 .padding(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = if (showChannels) Arrangement.spacedBy(12.dp) else Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(0.32f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(BrandPanel)
-                    .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
-                    .padding(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = streamTitle,
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(5.dp))
-                        Surface(
-                            color = BrandRed.copy(alpha = 0.16f),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.live_status),
-                                color = BrandRed,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-                    IconButton(onClick = onRefresh, enabled = !isRefreshing) {
-                        if (isRefreshing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = BrandAccent,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = stringResource(R.string.refresh_data),
-                                tint = BrandAccent
-                            )
-                        }
-                    }
-                    IconButton(onClick = { onShareLive(activeStream) }) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share_live),
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = BrandBorder.copy(alpha = 0.8f))
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = stringResource(R.string.stream_channels),
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
+            if (showChannels) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .testTag("channel_switcher"),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .weight(0.32f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(BrandPanel)
+                        .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
+                        .padding(12.dp)
                 ) {
-                    if (streams.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.no_streams_available),
-                            color = Color.White.copy(alpha = 0.65f),
-                            fontSize = 12.sp
-                        )
-                    } else {
-                        streams.forEach { item ->
-                            val isSelected = item.id == activeStream.id
-                            val isSwitching = switchingStreamId == item.id
-                            BroadcastChannelCard(
-                                item = item,
-                                isSelected = isSelected,
-                                isSwitching = isSwitching,
-                                disabled = switchingStreamId != null,
-                                onClick = {
-                                    if (item.id != activeStream.id) onSelectStream(item)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 3.dp)
-                                    .alpha(if (switchingStreamId != null && !isSwitching) 0.65f else 1f)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = streamTitle,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            Surface(
+                                color = BrandRed.copy(alpha = 0.16f),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.live_status),
+                                    color = BrandRed,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = onToggleChannels,
+                            modifier = Modifier.testTag("channel_panel_toggle")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LiveTv,
+                                contentDescription = stringResource(R.string.toggle_live_channel_panel),
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = onRefresh, enabled = !isRefreshing) {
+                            if (isRefreshing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = BrandAccent,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = stringResource(R.string.refresh_data),
+                                    tint = BrandAccent
+                                )
+                            }
+                        }
+                        IconButton(onClick = { onShareLive(activeStream) }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(R.string.share_live),
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = BrandBorder.copy(alpha = 0.8f))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = stringResource(R.string.stream_channels),
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .testTag("channel_switcher"),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (streams.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.no_streams_available),
+                                color = Color.White.copy(alpha = 0.65f),
+                                fontSize = 12.sp
+                            )
+                        } else {
+                            streams.forEach { item ->
+                                val isSelected = item.id == activeStream.id
+                                val isSwitching = switchingStreamId == item.id
+                                BroadcastChannelCard(
+                                    item = item,
+                                    isSelected = isSelected,
+                                    isSwitching = isSwitching,
+                                    disabled = switchingStreamId != null,
+                                    onClick = {
+                                        if (item.id != activeStream.id) onSelectStream(item)
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 3.dp)
+                                        .alpha(if (switchingStreamId != null && !isSwitching) 0.65f else 1f)
+                                )
+                            }
                         }
                     }
                 }
@@ -1538,7 +1556,7 @@ private fun LandscapeLivePlayer(
 
             Box(
                 modifier = Modifier
-                    .weight(0.68f)
+                    .weight(if (showChannels) 0.68f else 1f)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(18.dp))
                     .background(Color.Black),
@@ -1556,6 +1574,50 @@ private fun LandscapeLivePlayer(
                             .aspectRatio(16f / 9f)
                             .testTag("live_video_player")
                     )
+                }
+                if (!showChannels) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(BrandPanel.copy(alpha = 0.92f))
+                            .testTag("landscape_player_controls"),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onToggleChannels,
+                            modifier = Modifier.testTag("channel_panel_toggle")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LiveTv,
+                                contentDescription = stringResource(R.string.toggle_live_channel_panel),
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = onRefresh, enabled = !isRefreshing) {
+                            if (isRefreshing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = BrandAccent,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = stringResource(R.string.refresh_data),
+                                    tint = BrandAccent
+                                )
+                            }
+                        }
+                        IconButton(onClick = { onShareLive(activeStream) }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(R.string.share_live),
+                                tint = Color.White
+                            )
+                        }
+                    }
                 }
             }
         }

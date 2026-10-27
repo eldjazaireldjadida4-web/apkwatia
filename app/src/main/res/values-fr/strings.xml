@@ -115,6 +115,7 @@
     <string name="program_guide">Guide des programmes</string>
     <string name="archive">Archive</string>
     <string name="stream_channels">Chaînes de diffusion</string>
+    <string name="toggle_live_channel_panel">Afficher ou masquer la liste des chaînes</string>
     <string name="playing_now">En cours de diffusion</string>
     <string name="archive_title">Archive d\'Elwatania TV</string>
     <string name="archive_subtitle">Programmes et bulletins à revoir quand vous voulez</string>
