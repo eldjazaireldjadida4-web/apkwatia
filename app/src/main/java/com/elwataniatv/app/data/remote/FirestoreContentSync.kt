@@ -1,5 +1,7 @@
 package com.elwataniatv.app.data.remote
 
+import com.elwataniatv.app.BuildConfig
+
 import android.util.Log
 import com.elwataniatv.app.util.ContentSanitizer
 import com.elwataniatv.app.data.local.CommentEntity
@@ -790,6 +792,11 @@ class FirestoreContentSync(private val authSync: FirebaseAuthSync) {
         onResult: (Boolean, String?) -> Unit
     ) {
         // Client-side moderation gate — runs BEFORE any network call
+        if (!BuildConfig.PUBLIC_COMMENTS_ENABLED) {
+            onResult(false, "التعليقات غير متاحة في نسخة المتجر الحالية")
+            return
+        }
+
         // (including anonymous sign-in) so rejected comments cost nothing.
         // Client-side only: the Firestore rules are the authoritative gate.
         val moderation = com.elwataniatv.app.util.ProfanityFilter.check(text)
