@@ -97,12 +97,21 @@ if grep -Fq '"source": "**"' "$hosting_config"; then
 fi
 require 'fs.cpSync' "$hosting_build"
 require 'admin/hosting-dist/' "$root_dir/.gitignore"
+require 'path.join(rootDir, "ios-pwa", "site")' "$hosting_build"
+require 'path.join(outputDir, "ios", "config.js")' "$hosting_build"
+require 'safeHttpsUrl' "$root_dir/ios-pwa/site/core.mjs"
+require 'serviceWorker.register' "$root_dir/ios-pwa/site/app.js"
+require 'manifest.webmanifest' "$root_dir/ios-pwa/site/index.html"
+require 'STATIC_FILES' "$root_dir/ios-pwa/site/sw.js"
+require '"./config.js"' "$root_dir/ios-pwa/site/sw.js"
+require 'https://firestore.googleapis.com' "$root_dir/firebase.json"
+node -e 'for (const file of process.argv.slice(1)) JSON.parse(require("fs").readFileSync(file, "utf8"))' "$root_dir/firebase.json" "$root_dir/admin/firebase.json" "$root_dir/ios-pwa/site/manifest.webmanifest"
 
 if git -C "$root_dir" ls-files | grep -E '(^|/)([^/]+\.(jks|keystore|p12|p8|key)|google-services\.json)$' >/dev/null; then
   echo "Tracked signing/Firebase secret file detected" >&2
   exit 1
 fi
 
-node --test "$root_dir/admin/tests/stream-preview.test.js"
+node --test "$root_dir/admin/tests/stream-preview.test.js" "$root_dir/ios-pwa/tests/core.test.js"
 
 echo "Security and release contract checks passed."

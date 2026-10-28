@@ -153,4 +153,4 @@ firebase use elwataniatvapp
 firebase deploy --only hosting
 ```
 
-الملف `firebase.json` يعرّف `hosting-dist` كمجلد Hosting، ويولّده من allowlist فقط: لوحة الإدارة، سياسة الخصوصية، و`assets`. رابط التشغيل المنشور حالياً هو `https://elwataniatvapp.web.app/admin/`، والجذر يحوّل تلقائياً إلى لوحة الإدارة. صفحة الخصوصية متاحة على `https://elwataniatvapp.web.app/privacy.html`.
+الملف `firebase.json` يعرّف `hosting-dist` كمجلد Hosting، ويولّده `scripts/build-hosting.js` من allowlist: لوحة الإدارة، سياسة الخصوصية، صفحة التنزيل الحالية وملفاتها، الأصول، ونسخة iPhone PWA تحت `/ios/`. يحقن البناء إعداد Firebase Web العام في اللوحة والـPWA؛ لا تُستخدم بيانات Firebase Admin. بعد موافقة مالك المشروع على النشر، يظهر التطبيق في `https://elwataniatvapp.web.app/ios/`. لم يُنشر مسار iPhone بعد؛ رابط لوحة الإدارة الحالية `https://elwataniatvapp.web.app/admin/` وسياسة الخصوصية `https://elwataniatvapp.web.app/privacy.html`.

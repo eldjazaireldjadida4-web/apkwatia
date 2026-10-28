@@ -79,6 +79,7 @@ const entries = [
   [path.join(rootDir, "privacy.html"), path.join(outputDir, "privacy.html"), "file"],
   [path.join(rootDir, "download.html"), path.join(outputDir, "download.html"), "file"],
   [path.join(rootDir, "assets"), path.join(outputDir, "assets"), "directory"],
+  [path.join(rootDir, "ios-pwa", "site"), path.join(outputDir, "ios"), "directory"],
 ];
 
 for (const [source, destination, kind] of entries) {
@@ -108,6 +109,8 @@ fs.writeFileSync(
   hostedIndexHtml.replace(firebaseConfigTag, `<script>${firebaseConfigScript}</script>`),
   "utf8"
 );
+const iosConfigPath = path.join(outputDir, "ios", "config.js");
+fs.writeFileSync(iosConfigPath, firebaseConfigScript, "utf8");
 
 const https = require("https");
 const { createHash } = require("crypto");
@@ -158,6 +161,8 @@ preserveCurrentDownload().then(() => {
   console.log("Firebase Hosting tree built from allowlist; existing public download preserved unchanged:");
   console.log("- admin/index.html -> admin/hosting-dist/admin/index.html");
   console.log("- Firebase config injected inline -> admin/hosting-dist/admin/index.html");
+  console.log("- iOS PWA -> admin/hosting-dist/ios/");
+  console.log("- Firebase config injected -> admin/hosting-dist/ios/config.js");
   console.log("- privacy.html -> admin/hosting-dist/privacy.html");
   console.log("- download.html -> admin/hosting-dist/download.html");
   console.log("- existing release APK payload -> admin/hosting-dist/assets/downloads/" + currentDownloadName);

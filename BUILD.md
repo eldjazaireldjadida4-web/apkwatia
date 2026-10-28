@@ -41,7 +41,11 @@
 
 لا يُنتج المشروع APK/AAB قابلاً للتثبيت من دون `google-services.json` للتطبيق `com.elwataniatv.app`: البث وقائمة القنوات تُحمّلان من Firestore. يمكن تشغيل اختبارات الوحدة من دون الملف، لكن يلزم ملف Android الصحيح للبناء والتشغيل الفعلي. ضع الملف محلياً في `app/google-services.json` ولا ترفعه إلى Git.
 
-مصدر الاختبار الآن `versionCode = 39` و`versionName = "8.6.1"`، لكن صفحة التحميل العامة ما زالت `versionCode = 30` و`versionName = "8.6.0"`. سجل 12 سبتمبر يوثق إصداراً موقّعاً برقم `versionCode 38`. APK debug موقّع بشهادة debug ولا يحدّث APK release؛ لا تنشره. قبل إصدار جديد، تحقق من Play Console، واستخدم رقماً أعلى من آخر إصدار فعلي وبصمة شهادة الإنتاج نفسها. يتضمن الإصدار أصول شعار القناة الموحد في `assets/images/watania-channel-logo-unified.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo_foreground.png`. يستخدم `AndroidManifest.xml` الاسم الصريح `@mipmap/ic_launcher_watania` لتجنب بقاء أيقونة launcher قديمة في cache. كما تم تحسين RTL، توسيع مساحة شريط التنقل للعربية، حجب القيم التجريبية في المصدر والواجهة، وربط زر الأخبار بوجهة YouTube.
+مرشح Android الحالي `versionCode = 42` و`versionName = "8.6.4"`، لكن صفحة التحميل العامة ما زالت `versionCode = 30` و`versionName = "8.6.0"` عمداً. APK debug موقّع بشهادة debug ولا يحدّث APK release؛ لا تنشره. قبل إصدار جديد، تحقق من Play Console، واستخدم رقماً أعلى من آخر إصدار فعلي وبصمة شهادة الإنتاج نفسها. يتضمن الإصدار أصول شعار القناة الموحد في `assets/images/watania-channel-logo-unified.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo.png` و`app/src/main/res/drawable-nodpi/watania_channel_logo_foreground.png`. يستخدم `AndroidManifest.xml` الاسم الصريح `@mipmap/ic_launcher_watania` لتجنب بقاء أيقونة launcher قديمة في cache. كما تم تحسين RTL، توسيع مساحة شريط التنقل للعربية، حجب القيم التجريبية في المصدر والواجهة، وربط زر الأخبار بوجهة YouTube.
+
+## نسخة iPhone (PWA)
+
+مصدر واجهة iPhone في `ios-pwa/site/`. هي PWA تعمل داخل Safari ويمكن تثبيتها على الشاشة الرئيسية، وليست مشروع Xcode أو IPA. يتم فحص منطقها عبر `node --test ios-pwa/tests/core.test.js`، وتُنسخ إلى مسار `/ios/` عند تشغيل `node scripts/build-hosting.js` بعد إعداد Firebase Web محلياً. النشر إلى Firebase Hosting خطوة مستقلة ولا يُنفّذ دون موافقة صاحب المشروع.
 
 ## البناء والاختبارات
 

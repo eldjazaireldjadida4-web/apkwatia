@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071b20">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="شاهد القنوات الوطنية الجزائرية مباشرة من iPhone.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="الوطنية TV">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>الوطنية TV — البث المباشر</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand" href="./" aria-label="الوطنية TV، الصفحة الرئيسية">
+        <img src="./icons/icon-192.png" alt="" width="46" height="46">
+        <span class="brand-copy">
+          <strong>الوطنية TV</strong>
+          <span>صوت الجزائر وصورتها</span>
+        </span>
+      </a>
+      <div id="header-live" class="header-live" data-state="idle" aria-label="حالة البث: اختر قناة">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span data-live-label>اختر قناة</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="live-section" class="live-section" aria-labelledby="page-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">قنوات الوطنية</p>
+            <h1 id="page-title">البث المباشر</h1>
+          </div>
+          <button id="refresh" class="icon-button" type="button" aria-label="تحديث القنوات" title="تحديث القنوات">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6l2 2M4 16l2 2a7 7 0 0 0 12.4-3"/></svg>
+          </button>
+        </div>
+
+        <div id="status" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+        <div class="player-card">
+          <div id="player-empty" class="player-empty">
+            <span class="play-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="m8 5 12 7-12 7z"/></svg>
+            </span>
+            <strong>اختر قناة وابدأ المشاهدة</strong>
+            <span>اضغط زر التشغيل داخل الفيديو لبدء البث</span>
+          </div>
+          <div id="player" class="player-frame" aria-label="مشغل البث المباشر" hidden></div>
+          <div class="player-caption">
+            <div id="player-state" class="caption-live" data-state="idle" aria-live="polite"><span class="live-dot" aria-hidden="true"></span><span>اختر قناة</span></div>
+            <h2 id="player-title">البث المباشر</h2>
+          </div>
+        </div>
+      </section>
+
+      <section class="channels-section" aria-labelledby="channels-title">
+        <div class="channels-heading">
+          <div>
+            <p class="eyebrow">اختر ما تشاهده</p>
+            <h2 id="channels-title">القنوات المتاحة</h2>
+          </div>
+          <span class="channels-note">حدّث عند الحاجة</span>
+        </div>
+        <div id="channels" class="channels-list" aria-label="قائمة القنوات"></div>
+      </section>
+
+      <aside id="install-help" class="install-help" hidden>
+        <div class="install-copy">
+          <strong>أضف التطبيق إلى iPhone</strong>
+          <span>في Safari اضغط «مشاركة» ثم «إضافة إلى الشاشة الرئيسية».</span>
+        </div>
+        <button id="install-close" class="dismiss-button" type="button" aria-label="إغلاق">×</button>
+      </aside>
+    </main>
+
+    <footer class="app-footer">
+      <span>الوطنية TV · بث إعلامي رسمي</span>
+      <a href="https://elwataniatvapp.web.app/privacy.html" target="_blank" rel="noopener noreferrer">سياسة الخصوصية</a>
+    </footer>
+  </div>
+  <script src="./config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
