@@ -18,15 +18,11 @@
       "**/node_modules/**"
     ],
     "cleanUrls": true,
+    "trailingSlash": true,
     "redirects": [
       {
         "source": "/",
         "destination": "/admin/",
-        "type": 301
-      },
-      {
-        "source": "/ios",
-        "destination": "/ios/",
         "type": 301
       }
     ],

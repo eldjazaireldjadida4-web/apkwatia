@@ -8,8 +8,8 @@
   "scope": "/ios/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#071b20",
-  "theme_color": "#071b20",
+  "background_color": "#10161b",
+  "theme_color": "#10161b",
   "icons": [
     {
       "src": "/ios/icons/icon-192.png",
