@@ -62,7 +62,16 @@ function renderChannels() {
       logo.alt = "";
       logo.loading = "lazy";
       logo.referrerPolicy = "no-referrer";
-      logo.addEventListener("error", () => logo.replaceWith(makeElement("span", "channel-logo-fallback", stream.title.slice(0, 1))), { once: true });
+      const fallback = () => {
+        if (!logo.isConnected) return;
+        const tile = makeElement("span", "channel-logo-fallback", stream.title.slice(0, 1));
+        logo.replaceWith(tile);
+      };
+      logo.addEventListener("error", fallback, { once: true });
+      const settleTimer = setTimeout(() => {
+        if (!(logo.complete && logo.naturalWidth > 0)) fallback();
+      }, 5000);
+      logo.addEventListener("load", () => clearTimeout(settleTimer), { once: true });
       button.append(logo);
     } else {
       button.append(makeElement("span", "channel-logo-fallback", stream.title.slice(0, 1)));

@@ -28,13 +28,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "redirects": [
-      {
-        "source": "/ios",
-        "destination": "/ios/",
-        "type": 301
-      }
-    ],
     "rewrites": [
       {
         "source": "/",
@@ -74,7 +67,7 @@
       }
     ],
     "cleanUrls": true,
-    "trailingSlash": false,
+    "trailingSlash": true,
     "headers": [
       {
         "source": "admin/**",
@@ -152,15 +145,6 @@
         ]
       },
       {
-        "source": "ios/sw.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
         "source": "ios/**",
         "headers": [
           {
@@ -178,6 +162,15 @@
           {
             "key": "Referrer-Policy",
             "value": "strict-origin-when-cross-origin"
+          }
+        ]
+      },
+      {
+        "source": "ios/sw.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       }

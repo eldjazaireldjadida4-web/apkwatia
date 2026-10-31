@@ -106,6 +106,22 @@ require 'STATIC_FILES' "$root_dir/ios-pwa/site/sw.js"
 require '"./config.js"' "$root_dir/ios-pwa/site/sw.js"
 require 'https://firestore.googleapis.com' "$root_dir/firebase.json"
 node -e 'for (const file of process.argv.slice(1)) JSON.parse(require("fs").readFileSync(file, "utf8"))' "$root_dir/firebase.json" "$root_dir/admin/firebase.json" "$root_dir/ios-pwa/site/manifest.webmanifest"
+node -e '
+const fs = require("node:fs");
+for (const file of process.argv.slice(1)) {
+  const hosting = JSON.parse(fs.readFileSync(file, "utf8")).hosting;
+  const rewrites = hosting.rewrites || [];
+  const headers = hosting.headers || [];
+  const wildcardIndex = headers.findIndex((rule) => rule.source === "ios/**");
+  const workerIndex = headers.findIndex((rule) => rule.source === "ios/sw.js");
+  const workerNoStore = workerIndex > wildcardIndex && headers[workerIndex].headers?.some((header) => header.key === "Cache-Control" && header.value.includes("no-store"));
+  const iosRedirect = (hosting.redirects || []).some((rule) => rule.source === "/ios");
+  const iosRewrites = ["/ios", "/ios/"].every((source) => rewrites.some((rule) => rule.source === source && rule.destination === "/ios/index.html"));
+  if (hosting.trailingSlash !== true || iosRedirect || !iosRewrites || !workerNoStore) {
+    throw new Error(`Invalid iOS Hosting routes or cache headers: ${file}`);
+  }
+}
+' "$root_dir/firebase.json" "$root_dir/admin/firebase.json"
 
 if git -C "$root_dir" ls-files | grep -E '(^|/)([^/]+\.(jks|keystore|p12|p8|key)|google-services\.json)$' >/dev/null; then
   echo "Tracked signing/Firebase secret file detected" >&2
