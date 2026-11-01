@@ -74,3 +74,13 @@ test("uses only trusted YouTube URL patterns and privacy-enhanced embeds", () =>
   assert.equal(toYouTubeEmbedUrl("https://youtube.evil.example/watch?v=abcdefghijk"), "");
   assert.equal(toYouTubeEmbedUrl("https://youtube.com/watch?v=short"), "");
 });
+
+test("converts YouTube channel live_stream URLs into privacy-enhanced channel embeds", () => {
+  assert.equal(
+    toYouTubeEmbedUrl("https://www.youtube.com/embed/live_stream?channel=UCTIN753Wd_5nxlOuHvuOhdg"),
+    "https://www.youtube-nocookie.com/embed/live_stream?channel=UCTIN753Wd_5nxlOuHvuOhdg&autoplay=1&playsinline=1&rel=0",
+  );
+  assert.equal(toYouTubeEmbedUrl("https://www.youtube.com/embed/live_stream?channel=NOT_A_CHANNEL_ID"), "");
+  assert.equal(toYouTubeEmbedUrl("https://www.youtube.com/embed/live_stream"), "");
+  assert.equal(toYouTubeEmbedUrl("https://youtube.evil.example/embed/live_stream?channel=UCTIN753Wd_5nxlOuHvuOhdg"), "");
+});

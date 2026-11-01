@@ -48,6 +48,13 @@ export function toYouTubeEmbedUrl(value) {
   try {
     const url = new URL(safeUrl);
     const host = url.hostname.toLowerCase();
+    if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+      if (url.pathname === "/embed/live_stream" || url.pathname === "/live_stream") {
+        const channelId = url.searchParams.get("channel") ?? "";
+        if (!/^UC[A-Za-z0-9_-]{22}$/.test(channelId)) return "";
+        return `https://www.youtube-nocookie.com/embed/live_stream?channel=${encodeURIComponent(channelId)}&autoplay=1&playsinline=1&rel=0`;
+      }
+    }
     let videoId = "";
     if (host === "youtu.be") videoId = url.pathname.split("/").filter(Boolean)[0] ?? "";
     if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
