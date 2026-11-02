@@ -56,7 +56,7 @@
 
 ## 🚀 البناء والتشغيل
 
-1. **المتطلبات**: Android Studio Ladybug / AGP 8.8+ / JDK 17+ / Android SDK 36
+1. **المتطلبات**: AGP 9.5+ (Gradle Wrapper 9.8.2) / JDK 17+ / Android SDK 37 (`compileSdk`)؛ يبقى `targetSdk = 36` كما هو
 2. **البناء**:
    ```bash
    ./gradlew assembleDebug

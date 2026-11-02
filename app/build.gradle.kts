@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
@@ -48,7 +47,7 @@ if (hasGoogleServices) {
 
 android {
     namespace = "com.elwataniatv.app"
-    compileSdk = 36
+    compileSdk = 37
 
     // In-app language switching (Arabic/English) must work inside Play App
     // Bundles: keep all locale resources in the base module instead of
@@ -189,7 +188,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
-    implementation("androidx.media:media:1.7.0")
+    implementation("androidx.media:media:1.8.0")
 
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
