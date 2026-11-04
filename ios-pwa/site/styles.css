@@ -227,6 +227,14 @@ h1 {
   color: #8fd0e1;
 }
 
+.icon-button[aria-busy="true"] svg {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .icon-button svg {
   width: 18px;
   height: 18px;
@@ -258,6 +266,10 @@ h1 {
   border-color: rgba(227, 77, 75, 0.38);
   background: rgba(227, 77, 75, 0.09);
   color: #ffaaa5;
+}
+
+.channels-note[data-cached="true"] {
+  color: #d4b47b;
 }
 
 .player-card {

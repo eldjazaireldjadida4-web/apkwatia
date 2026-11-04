@@ -12,11 +12,15 @@ const elements = {
   refresh: document.querySelector("#refresh"),
   install: document.querySelector("#install-help"),
   installClose: document.querySelector("#install-close"),
+  lastUpdated: document.querySelector("#last-updated"),
 };
 
+const STREAMS_CACHE_KEY = "watania-ios-streams-v1";
+const STREAMS_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
 let streams = [];
 let activeId = "";
 let loading = false;
+let lastFetchedAt = 0;
 
 function setStatus(message, kind = "info") {
   elements.status.textContent = message;
@@ -38,6 +42,50 @@ function setPlayerState(message, state) {
   }
 }
 
+function formatUpdatedAt(timestamp) {
+  if (!Number.isFinite(timestamp)) return "";
+  try {
+    return new Intl.DateTimeFormat("ar-DZ", { hour: "2-digit", minute: "2-digit" }).format(timestamp);
+  } catch {
+    return "";
+  }
+}
+
+function updateLastUpdated(timestamp, cached = false) {
+  if (!elements.lastUpdated) return;
+  const time = formatUpdatedAt(timestamp);
+  elements.lastUpdated.textContent = time
+    ? `${cached ? "آخر نسخة محفوظة" : "آخر تحديث"} ${time}`
+    : "البث الرسمي";
+  elements.lastUpdated.dataset.cached = String(cached);
+}
+
+function cacheStreams() {
+  try {
+    localStorage.setItem(STREAMS_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), streams }));
+  } catch {
+    // Safari private mode or a full storage quota should not block playback.
+  }
+}
+
+function restoreCachedStreams() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(STREAMS_CACHE_KEY) ?? "null");
+    const savedAt = Number(cached?.savedAt);
+    if (!Array.isArray(cached?.streams) || !Number.isFinite(savedAt) || Date.now() - savedAt > STREAMS_CACHE_MAX_AGE) return false;
+    const restored = normalizeStreams(cached.streams);
+    if (!restored.length) return false;
+    streams = restored;
+    lastFetchedAt = savedAt;
+    updateLastUpdated(savedAt, true);
+    renderChannels();
+    renderPlayer();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function makeElement(tag, className, text = "") {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -47,6 +95,7 @@ function makeElement(tag, className, text = "") {
 
 function renderChannels() {
   elements.channels.replaceChildren();
+  elements.channels.setAttribute("aria-busy", String(loading));
   if (!streams.length) {
     elements.channels.append(makeElement("p", "empty-state", "لا توجد قنوات بث متاحة حالياً."));
     return;
@@ -160,6 +209,7 @@ async function fetchStreams() {
   loading = true;
   elements.refresh.disabled = true;
   elements.refresh.setAttribute("aria-busy", "true");
+  elements.channels.setAttribute("aria-busy", "true");
   setStatus("جارٍ تحميل القنوات…");
   try {
     const url = new URL(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents/streams`);
@@ -177,6 +227,9 @@ async function fetchStreams() {
     const payload = await response.json();
     streams = normalizeStreams(Array.isArray(payload.documents) ? payload.documents : []);
     if (!streams.some((item) => item.id === activeId)) activeId = "";
+    lastFetchedAt = Date.now();
+    cacheStreams();
+    updateLastUpdated(lastFetchedAt);
     renderChannels();
     renderPlayer();
     setStatus(streams.length ? "القنوات محدّثة. اضغط تشغيل داخل الفيديو للمشاهدة." : "لا توجد قنوات بث متاحة حالياً.", streams.length ? "success" : "info");
@@ -189,11 +242,14 @@ async function fetchStreams() {
       elements.channels.replaceChildren(makeElement("p", "empty-state", message));
       elements.player.hidden = true;
       elements.playerEmpty.hidden = false;
+    } else {
+      setStatus(`${message} يتم عرض آخر قائمة محفوظة.`, "error");
     }
   } finally {
     loading = false;
     elements.refresh.disabled = false;
     elements.refresh.removeAttribute("aria-busy");
+    elements.channels.setAttribute("aria-busy", "false");
   }
 }
 
@@ -214,8 +270,18 @@ function setupInstallHelp() {
 }
 
 elements.refresh.addEventListener("click", fetchStreams);
-window.addEventListener("online", fetchStreams);
+window.addEventListener("online", () => {
+  setStatus("عاد الاتصال. جارٍ تحديث القنوات…", "info");
+  fetchStreams();
+});
+window.addEventListener("offline", () => {
+  setStatus("لا يوجد اتصال بالإنترنت. ستظهر آخر قائمة محفوظة إن وُجدت.", "error");
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && Date.now() - lastFetchedAt > 60_000) fetchStreams();
+});
 setupInstallHelp();
+restoreCachedStreams();
 fetchStreams();
 
 if ("serviceWorker" in navigator && window.isSecureContext) {

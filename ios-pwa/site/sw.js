@@ -1,4 +1,4 @@
-const CACHE_NAME = "elwataniatv-ios-v5";
+const CACHE_NAME = "elwataniatv-ios-v6";
 const STATIC_FILES = [
   "./",
   "./index.html",
