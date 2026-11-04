@@ -89,10 +89,10 @@ firebase deploy --only firestore:rules
 
 > أو أمر واحد جاهز من جذر المستودع: `bash scripts/deploy-firebase.sh` (يفحص CLI والتسجيل، ينشر القواعد + الفهارس، ويعرض خطوات التحقق).
 
-الاختبارات المحلية (تتطلب Node.js 22 وJDK 21+ لمحاكي Firebase):
+الاختبارات المحلية (تتطلب Node.js 24.12+ وJDK 21+ لمحاكي Firebase؛ هذا المتطلب يخص `rules-tests` فقط، ولا يغيّر Node.js 22 لـCloud Functions):
 ```bash
 npm ci --prefix rules-tests
-npm test --prefix rules-tests        # 30/30 — تُشغَّل أيضاً في CI
+npm test --prefix rules-tests        # 30/30
 ```
 > ملاحظة: `rules-tests/firebase.json` يستخدم منفذ المحاكي **8081** (الساندبوكس يشغل 8080).
 

@@ -36,7 +36,6 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { initializeApp }      = require("firebase-admin/app");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
-const { Expo }               = require("expo-server-sdk");
 const { moderate }           = require("./profanity");
 const {
   chunkItems,
@@ -53,6 +52,13 @@ const {
 } = require("./lib/comment-rate-limit");
 
 initializeApp();
+
+let expoClientPromise;
+
+function getExpoClient() {
+  expoClientPromise ??= import("expo-server-sdk").then(({ Expo }) => new Expo());
+  return expoClientPromise;
+}
 
 /**
  * Single region for every function in this project. Firestore event
@@ -140,8 +146,6 @@ exports.moderateComment = onDocumentCreated(
     }
   },
 );
-
-const expo = new Expo();
 
 // ─── Send Push Notification ───────────────────────────────────────
 // Triggers when the admin panel writes a new doc to the `notifications`
@@ -261,6 +265,8 @@ exports.sendPushNotification = onDocumentCreated(
         body,
         data:  { type: "push_notification", category: category ?? "" },
       }));
+
+      const expo = await getExpoClient();
 
       const chunks = expo.chunkPushNotifications(messages);
       for (const chunk of chunks) {
